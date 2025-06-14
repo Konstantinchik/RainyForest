@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace DTInventory {
-    
+namespace DTInventory
+{
+
     public class RegisterPlayerInstance : MonoBehaviour
     {
         private void Start()
@@ -18,6 +19,6 @@ namespace DTInventory {
                 print("Destroy player duplicate. Player instance already exists");
                 Destroy(gameObject);
             }
-    }
+        }
     }
 }
