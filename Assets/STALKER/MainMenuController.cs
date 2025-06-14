@@ -1,4 +1,5 @@
 using DarkTreeFPS;
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -11,21 +12,33 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private GameObject _mainMenuCamera;
 
     /* ---------- UI ---------- */
-    [Header("Кнопки")]
+    [Header("Кнопки главного меню")]
     public Button newGameButton;
     public Button resumeGameButton;
     public Button loadGameButton;
     public Button optionsButton;
     public Button exitButton;
 
-    [Header("Панели")]
+    /* ---------- UI Quit ---------- */
+    [Header("Кнопки меню выхода")]
+    public Button exitGameButton;
+    public Button noExitGameButton;
+
+    [Header("Панели главного меню")]
     public GameObject optionsPanel;          // вкладки настроек
+    public GameObject exitGamePanel;         // панель подтверждения выхода
     public GameObject pauseMenuPanel;        // если есть отдельная панель паузы
+
+    [Header("Панели меню настроек")]
+    public GameObject videoPanel;          
+    public GameObject soundPanel;         
+    public GameObject gamePanel;  
+    public GameObject controlPanel;
 
     /* ---------- Настройки ---------- */
     [Header("Настройки")]
     public string newGameSceneName = "GameScene"; // Имя сцены для "Новой игры"
-    
+
 
     /* ---------- Внутреннее ---------- */
     public bool IsActive => isMenuActive;
@@ -36,10 +49,10 @@ public class MainMenuController : MonoBehaviour
     #region Unity Lifecycle
     private void Awake()
     {
-        if (Instance != null && Instance != this) 
-        { 
-            Destroy(gameObject); 
-            return; 
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
         }
         Instance = this;
 
@@ -57,10 +70,24 @@ public class MainMenuController : MonoBehaviour
         resumeGameButton.onClick.AddListener(ResumeGame);
         loadGameButton.onClick.AddListener(LoadGame);
         optionsButton.onClick.AddListener(ToggleOptions);
-        exitButton.onClick.AddListener(ExitGame);
+        exitButton.onClick.AddListener(ShowExitPanel);
+
+        // Панель выхода
+        exitGameButton.onClick.AddListener(ExitGame);
+        noExitGameButton.onClick.AddListener(CloseExitPanel);
 
         resumeGameButton.interactable = SaveSystem.HasSave();
 
+    }
+
+    private void CloseExitPanel()
+    {
+        exitGamePanel.SetActive(false);
+    }
+
+    private void ShowExitPanel()
+    {
+        exitGamePanel.SetActive(true);
     }
 
     private void OnDestroy()
