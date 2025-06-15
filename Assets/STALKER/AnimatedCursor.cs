@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 
+// Чтобы этот анимированный курсор работал корректно с dropdown нужно
+// sorting order у Canvas установить 32767 - или выше
+
 public class AnimatedCursor : MonoBehaviour
 {
     [SerializeField]
@@ -11,7 +14,7 @@ public class AnimatedCursor : MonoBehaviour
     private int currentFrame;
     private float timer;
 
-    private Vector2 offset = new Vector2(10, -10); // Смещение вправо и вниз
+    private Vector2 offset = new Vector2(16, -16); // Смещение вправо и вниз
 
     private void Awake()
     {
