@@ -7285,7 +7285,7 @@ MonoBehaviour:
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 800, y: 600}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 1
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -10255,7 +10255,7 @@ MonoBehaviour:
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 1
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -19948,7 +19948,7 @@ MonoBehaviour:
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 1
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -22162,6 +22162,11 @@ PrefabInstance:
       propertyPath: m_AnchorMin.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6360186959113134153, guid: 453806d5bfa8efe4b945e2ac1b06f35d,
+        type: 3}
+      propertyPath: m_MovementType
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 7992054227977667582, guid: 453806d5bfa8efe4b945e2ac1b06f35d,
         type: 3}
       propertyPath: m_SizeDelta.y
@@ -22170,7 +22175,7 @@ PrefabInstance:
     - target: {fileID: 7992054227977667582, guid: 453806d5bfa8efe4b945e2ac1b06f35d,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -0.00013258065
+      value: -0.000991574
       objectReference: {fileID: 0}
     - target: {fileID: 8057515530897788690, guid: 453806d5bfa8efe4b945e2ac1b06f35d,
         type: 3}
@@ -22201,7 +22206,7 @@ PrefabInstance:
     - target: {fileID: 8609185485991460021, guid: 453806d5bfa8efe4b945e2ac1b06f35d,
         type: 3}
       propertyPath: m_Value
-      value: 1.0000001
+      value: 1.0000006
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
