@@ -1167,7 +1167,7 @@ GameObject:
   - component: {fileID: 3233885294050078963}
   - component: {fileID: 3620926230057481222}
   m_Layer: 5
-  m_Name: Weapon6KeyButton
+  m_Name: BoltButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2541,7 +2541,7 @@ GameObject:
   - component: {fileID: 6368119586902081094}
   - component: {fileID: 2013542247331054562}
   m_Layer: 5
-  m_Name: Weapon5Text (TMP)
+  m_Name: GrenadeText (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2594,7 +2594,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u041E\u0440\u0443\u0436\u0438\u0435 5"
+  m_text: "\u0413\u0440\u0430\u043D\u0430\u0442\u0430"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -3371,7 +3371,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.574, y: 0.6875555}
   m_AnchorMax: {x: 0.683, y: 0.72200006}
-  m_AnchoredPosition: {x: -0.000091552734, y: 0.23071289}
+  m_AnchoredPosition: {x: -0.00012207031, y: 0.23071289}
   m_SizeDelta: {x: 0, y: 0.4615}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5571804823126550065
@@ -3764,7 +3764,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.79737407, y: 0.22900002}
   m_AnchorMax: {x: 0.906, y: 0.26200002}
-  m_AnchoredPosition: {x: -0.000061035156, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0.00010681, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6606485946675759439
@@ -8305,7 +8305,7 @@ GameObject:
   - component: {fileID: 2905757832894604981}
   - component: {fileID: 1061866226467393767}
   m_Layer: 5
-  m_Name: Weapon6Text (TMP)
+  m_Name: BoltText (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8358,7 +8358,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u041E\u0440\u0443\u0436\u0438\u0435 6"
+  m_text: "\u0411\u043E\u043B\u0442"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -8561,6 +8561,7 @@ GameObject:
   - component: {fileID: 137273782980814187}
   - component: {fileID: 4205447783548230295}
   - component: {fileID: 8614668802209030341}
+  - component: {fileID: 5356216898839365393}
   m_Layer: 5
   m_Name: ControlTab
   m_TagString: Untagged
@@ -8635,6 +8636,107 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &5356216898839365393
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2365710113810008222}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faf9cb36e3cb07745a0420f1cfb59581, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bindings:
+  - actionName: "\u0412\u043B\u0435\u0432\u043E"
+    buttonText: {fileID: 6768403811036952163}
+    uiButton: {fileID: 3055777020617350660}
+    key: 276
+  - actionName: "\u0412\u043F\u0440\u0430\u0432\u043E"
+    buttonText: {fileID: 448097948073640259}
+    uiButton: {fileID: 3415444822997718992}
+    key: 275
+  - actionName: "\u0412\u0432\u0435\u0440\u0445"
+    buttonText: {fileID: 2902547540982867905}
+    uiButton: {fileID: 560111418994266118}
+    key: 273
+  - actionName: "\u0412\u043D\u0438\u0437"
+    buttonText: {fileID: 3848521329800752412}
+    uiButton: {fileID: 127771782219736009}
+    key: 274
+  - actionName: "\u0412\u043F\u0435\u0440\u0435\u0434"
+    buttonText: {fileID: 8186625148836234711}
+    uiButton: {fileID: 5293529192858471159}
+    key: 119
+  - actionName: "\u041D\u0430\u0437\u0430\u0434"
+    buttonText: {fileID: 6781298320889048276}
+    uiButton: {fileID: 510465876178063742}
+    key: 115
+  - actionName: "\u0428\u0430\u0433 \u0432\u043B\u0435\u0432\u043E"
+    buttonText: {fileID: 6232428307034136545}
+    uiButton: {fileID: 3687307043988749078}
+    key: 97
+  - actionName: "\u0428\u0430\u0433 \u0432\u043F\u0440\u0430\u0432\u043E"
+    buttonText: {fileID: 2181153741228772518}
+    uiButton: {fileID: 4001580943869838091}
+    key: 100
+  - actionName: "\u041F\u0440\u044B\u0436\u043E\u043A"
+    buttonText: {fileID: 6004648024435763226}
+    uiButton: {fileID: 47678975952323709}
+    key: 32
+  - actionName: "\u041F\u0440\u0438\u0441\u0435\u0441\u0442\u044C"
+    buttonText: {fileID: 969700784964743996}
+    uiButton: {fileID: 2759634438964269819}
+    key: 99
+  - actionName: "\u0412\u0441\u0435\u0433\u0434\u0430 \u0432 \u043F\u0440\u0438\u0441\u044F\u0434\u0438"
+    buttonText: {fileID: 2683108905643998754}
+    uiButton: {fileID: 4661070542808774028}
+    key: 306
+  - actionName: "\u0428\u0430\u0433"
+    buttonText: {fileID: 4847607362940459621}
+    uiButton: {fileID: 7558468848160716426}
+    key: 304
+  - actionName: "\u0411\u0435\u0433"
+    buttonText: {fileID: 3849895002031582964}
+    uiButton: {fileID: 2187860961190882460}
+    key: 120
+  - actionName: "\u0412\u044B\u0433\u043B\u044F\u043D\u0443\u0442\u044C \u0432\u043B\u0435\u0432\u043E"
+    buttonText: {fileID: 7155281661138338467}
+    uiButton: {fileID: 781910601647982900}
+    key: 113
+  - actionName: "\u0412\u044B\u0433\u043B\u044F\u043D\u0443\u0442\u044C \u0432\u043F\u0440\u0430\u0432\u043E"
+    buttonText: {fileID: 3716790041551004503}
+    uiButton: {fileID: 2097526343252153180}
+    key: 101
+  - actionName: "\u041E\u0440\u0443\u0436\u0438\u0435 1"
+    buttonText: {fileID: 3812319463166544284}
+    uiButton: {fileID: 8265409044378035158}
+    key: 49
+  - actionName: "\u041E\u0440\u0443\u0436\u0438\u0435 2"
+    buttonText: {fileID: 4813957800196008940}
+    uiButton: {fileID: 7035955662821917278}
+    key: 50
+  - actionName: "\u041E\u0440\u0443\u0436\u0438\u0435 3"
+    buttonText: {fileID: 4486608582526728814}
+    uiButton: {fileID: 1210636834029022780}
+    key: 51
+  - actionName: "\u041E\u0440\u0443\u0436\u0438\u0435 4"
+    buttonText: {fileID: 3774688499145471483}
+    uiButton: {fileID: 7717987579259954929}
+    key: 52
+  - actionName: "\u0413\u0440\u0430\u043D\u0430\u0442\u0430"
+    buttonText: {fileID: 2013542247331054562}
+    uiButton: {fileID: 7703638359679673320}
+    key: 53
+  - actionName: "\u0411\u043E\u043B\u0442"
+    buttonText: {fileID: 1061866226467393767}
+    uiButton: {fileID: 3620926230057481222}
+    key: 54
+  - actionName: "\u0411\u0438\u043D\u043E\u043A\u043B\u044C"
+    buttonText: {fileID: 1937892195014131722}
+    uiButton: {fileID: 7990404465329717344}
+    key: 55
 --- !u!1 &2369484286502200127
 GameObject:
   m_ObjectHideFlags: 0
@@ -18913,7 +19015,7 @@ GameObject:
   - component: {fileID: 7169953506953326754}
   - component: {fileID: 7990404465329717344}
   m_Layer: 5
-  m_Name: Weapon7KeyButton
+  m_Name: BinoButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -19623,7 +19725,7 @@ GameObject:
   - component: {fileID: 3216636517182018586}
   - component: {fileID: 1937892195014131722}
   m_Layer: 5
-  m_Name: Weapon7Text (TMP)
+  m_Name: BinoText (TMP)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -19676,7 +19778,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\u041E\u0440\u0443\u0436\u0438\u0435 7"
+  m_text: "\u0411\u0438\u043D\u043E\u043A\u043B\u044C"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -22453,7 +22555,7 @@ GameObject:
   - component: {fileID: 4685581461144382045}
   - component: {fileID: 7703638359679673320}
   m_Layer: 5
-  m_Name: Weapon5KeyButton
+  m_Name: GrenadeButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -31716,7 +31818,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.7784792, y: 0.17600001}
   m_AnchorMax: {x: 0.9165209, y: 0.21200001}
-  m_AnchoredPosition: {x: -0.00012207031, y: -0.000061035156}
+  m_AnchoredPosition: {x: -0.00012207031, y: 0}
   m_SizeDelta: {x: -0.00012207, y: 0.0001}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6858134676769814768
@@ -35556,7 +35658,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 5248387154144395748}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 5356216898839365393}
+        m_TargetAssemblyTypeName: KeybindManager, Assembly-CSharp
+        m_MethodName: SaveBindings
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &8957103681821706117
 GameObject:
   m_ObjectHideFlags: 0
@@ -35957,7 +36071,7 @@ PrefabInstance:
     - target: {fileID: 1484711937578297950, guid: 453806d5bfa8efe4b945e2ac1b06f35d,
         type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1484711937578297950, guid: 453806d5bfa8efe4b945e2ac1b06f35d,
         type: 3}
@@ -36068,7 +36182,7 @@ PrefabInstance:
     - target: {fileID: 3969546981004743954, guid: 453806d5bfa8efe4b945e2ac1b06f35d,
         type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0.000030517578
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3969546981004743954, guid: 453806d5bfa8efe4b945e2ac1b06f35d,
         type: 3}
@@ -36143,7 +36257,7 @@ PrefabInstance:
     - target: {fileID: 7992054227977667582, guid: 453806d5bfa8efe4b945e2ac1b06f35d,
         type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 573.68005
+      value: 1618.1599
       objectReference: {fileID: 0}
     - target: {fileID: 8057515530897788690, guid: 453806d5bfa8efe4b945e2ac1b06f35d,
         type: 3}
@@ -36174,12 +36288,12 @@ PrefabInstance:
     - target: {fileID: 8609185485991460021, guid: 453806d5bfa8efe4b945e2ac1b06f35d,
         type: 3}
       propertyPath: m_Size
-      value: 0.13707338
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8609185485991460021, guid: 453806d5bfa8efe4b945e2ac1b06f35d,
         type: 3}
       propertyPath: m_Value
-      value: 0.6454738
+      value: 0.000000037718863
       objectReference: {fileID: 0}
     - target: {fileID: 8609185485991460021, guid: 453806d5bfa8efe4b945e2ac1b06f35d,
         type: 3}
