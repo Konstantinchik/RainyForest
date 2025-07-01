@@ -161,6 +161,10 @@ public class MainMenuController : MonoBehaviour
     {
         AsyncOperation op = SceneManager.UnloadSceneAsync(currentGameScene);
         while (!op.isDone) yield return null;
+
+        // ”ведомл€ем GameManager
+        GameManager.Instance.RemoveGameScene(currentGameScene);
+
         currentGameScene = null;
     }
 
@@ -215,6 +219,9 @@ public class MainMenuController : MonoBehaviour
         Scene loadedScene = SceneManager.GetSceneByName(sceneName);
         SceneManager.SetActiveScene(loadedScene);
         currentGameScene = sceneName;
+
+        // ”ведомл€ем GameManager о загрузке
+        GameManager.Instance.AddGameScene(sceneName);
 
         /* после загрузки Ч убираем меню и начинаем игру */
         SetMenuActive(false);
