@@ -6431,7 +6431,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: "\u0420\u0435\u0436\u0438\u043C \u0441\u0442\u0440\u0435\u043B\u044C\u0431\u044B
-    \u0441\u043B\u0435\u0434."
+    \u043F\u0440\u0435\u0434."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -8649,94 +8649,226 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bindings:
-  - actionName: "\u0412\u043B\u0435\u0432\u043E"
+  - actionName: Left
     buttonText: {fileID: 6768403811036952163}
     uiButton: {fileID: 3055777020617350660}
     key: 276
-  - actionName: "\u0412\u043F\u0440\u0430\u0432\u043E"
+  - actionName: Right
     buttonText: {fileID: 448097948073640259}
     uiButton: {fileID: 3415444822997718992}
     key: 275
-  - actionName: "\u0412\u0432\u0435\u0440\u0445"
+  - actionName: Up
     buttonText: {fileID: 2902547540982867905}
     uiButton: {fileID: 560111418994266118}
     key: 273
-  - actionName: "\u0412\u043D\u0438\u0437"
+  - actionName: Down
     buttonText: {fileID: 3848521329800752412}
     uiButton: {fileID: 127771782219736009}
     key: 274
-  - actionName: "\u0412\u043F\u0435\u0440\u0435\u0434"
+  - actionName: Forward
     buttonText: {fileID: 8186625148836234711}
     uiButton: {fileID: 5293529192858471159}
     key: 119
-  - actionName: "\u041D\u0430\u0437\u0430\u0434"
+  - actionName: Backward
     buttonText: {fileID: 6781298320889048276}
     uiButton: {fileID: 510465876178063742}
     key: 115
-  - actionName: "\u0428\u0430\u0433 \u0432\u043B\u0435\u0432\u043E"
+  - actionName: StrafeLeft
     buttonText: {fileID: 6232428307034136545}
     uiButton: {fileID: 3687307043988749078}
     key: 97
-  - actionName: "\u0428\u0430\u0433 \u0432\u043F\u0440\u0430\u0432\u043E"
+  - actionName: StrafeRight
     buttonText: {fileID: 2181153741228772518}
     uiButton: {fileID: 4001580943869838091}
     key: 100
-  - actionName: "\u041F\u0440\u044B\u0436\u043E\u043A"
+  - actionName: Jump
     buttonText: {fileID: 6004648024435763226}
     uiButton: {fileID: 47678975952323709}
     key: 32
-  - actionName: "\u041F\u0440\u0438\u0441\u0435\u0441\u0442\u044C"
+  - actionName: Sit
     buttonText: {fileID: 969700784964743996}
     uiButton: {fileID: 2759634438964269819}
     key: 99
-  - actionName: "\u0412\u0441\u0435\u0433\u0434\u0430 \u0432 \u043F\u0440\u0438\u0441\u044F\u0434\u0438"
+  - actionName: AlwaysSit
     buttonText: {fileID: 2683108905643998754}
     uiButton: {fileID: 4661070542808774028}
     key: 306
-  - actionName: "\u0428\u0430\u0433"
+  - actionName: Step
     buttonText: {fileID: 4847607362940459621}
     uiButton: {fileID: 7558468848160716426}
     key: 304
-  - actionName: "\u0411\u0435\u0433"
+  - actionName: Run
     buttonText: {fileID: 3849895002031582964}
     uiButton: {fileID: 2187860961190882460}
     key: 120
-  - actionName: "\u0412\u044B\u0433\u043B\u044F\u043D\u0443\u0442\u044C \u0432\u043B\u0435\u0432\u043E"
+  - actionName: LookLeft
     buttonText: {fileID: 7155281661138338467}
     uiButton: {fileID: 781910601647982900}
     key: 113
-  - actionName: "\u0412\u044B\u0433\u043B\u044F\u043D\u0443\u0442\u044C \u0432\u043F\u0440\u0430\u0432\u043E"
+  - actionName: LookRight
     buttonText: {fileID: 3716790041551004503}
     uiButton: {fileID: 2097526343252153180}
     key: 101
-  - actionName: "\u041E\u0440\u0443\u0436\u0438\u0435 1"
+  - actionName: Weapon1
     buttonText: {fileID: 3812319463166544284}
     uiButton: {fileID: 8265409044378035158}
     key: 49
-  - actionName: "\u041E\u0440\u0443\u0436\u0438\u0435 2"
+  - actionName: Weapon2
     buttonText: {fileID: 4813957800196008940}
     uiButton: {fileID: 7035955662821917278}
     key: 50
-  - actionName: "\u041E\u0440\u0443\u0436\u0438\u0435 3"
+  - actionName: Weapon3
     buttonText: {fileID: 4486608582526728814}
     uiButton: {fileID: 1210636834029022780}
     key: 51
-  - actionName: "\u041E\u0440\u0443\u0436\u0438\u0435 4"
+  - actionName: Weapon4
     buttonText: {fileID: 3774688499145471483}
     uiButton: {fileID: 7717987579259954929}
     key: 52
-  - actionName: "\u0413\u0440\u0430\u043D\u0430\u0442\u0430"
+  - actionName: Grenade
     buttonText: {fileID: 2013542247331054562}
     uiButton: {fileID: 7703638359679673320}
     key: 53
-  - actionName: "\u0411\u043E\u043B\u0442"
+  - actionName: Bolt
     buttonText: {fileID: 1061866226467393767}
     uiButton: {fileID: 3620926230057481222}
     key: 54
-  - actionName: "\u0411\u0438\u043D\u043E\u043A\u043B\u044C"
+  - actionName: Bino
     buttonText: {fileID: 1937892195014131722}
     uiButton: {fileID: 7990404465329717344}
     key: 55
+  - actionName: BulletType
+    buttonText: {fileID: 5163436992902155293}
+    uiButton: {fileID: 8173140008332899278}
+    key: 121
+  - actionName: NextSlotWeapon
+    buttonText: {fileID: 8034328088080034482}
+    uiButton: {fileID: 1916439762997280765}
+    key: 93
+  - actionName: PrevSlotWeapon
+    buttonText: {fileID: 5174883965598965522}
+    uiButton: {fileID: 7263620203214561036}
+    key: 91
+  - actionName: Fire
+    buttonText: {fileID: 6377521716254629996}
+    uiButton: {fileID: 5558086599990164267}
+    key: 323
+  - actionName: Aim
+    buttonText: {fileID: 866827741185403842}
+    uiButton: {fileID: 7643146498875092207}
+    key: 324
+  - actionName: Reload
+    buttonText: {fileID: 7061090483252687402}
+    uiButton: {fileID: 4284158964626440719}
+    key: 114
+  - actionName: Underbarrel
+    buttonText: {fileID: 9092608581476597185}
+    uiButton: {fileID: 2889995433408903481}
+    key: 118
+  - actionName: Underbarrel
+    buttonText: {fileID: 9092608581476597185}
+    uiButton: {fileID: 2889995433408903481}
+    key: 118
+  - actionName: PrevFireMode
+    buttonText: {fileID: 7315330438227291702}
+    uiButton: {fileID: 2122950735526848934}
+    key: 265
+  - actionName: NextFireMode
+    buttonText: {fileID: 219032573730534243}
+    uiButton: {fileID: 2887794811154967818}
+    key: 256
+  - actionName: Inventory
+    buttonText: {fileID: 6337139928305978022}
+    uiButton: {fileID: 6472669300431935597}
+    key: 9
+  - actionName: ActiveTasks
+    buttonText: {fileID: 1210308156986671797}
+    uiButton: {fileID: 5626837801788507428}
+    key: 112
+  - actionName: Map
+    buttonText: {fileID: 7071693352354421226}
+    uiButton: {fileID: 8250663245327782136}
+    key: 109
+  - actionName: Torch
+    buttonText: {fileID: 6621896056167189991}
+    uiButton: {fileID: 4178527483779275844}
+    key: 108
+  - actionName: NightVision
+    buttonText: {fileID: 7733660789790168102}
+    uiButton: {fileID: 3626950069716863787}
+    key: 110
+  - actionName: Bint
+    buttonText: {fileID: 4702055218585899755}
+    uiButton: {fileID: 1411736378478843903}
+    key: 282
+  - actionName: FirstAid
+    buttonText: {fileID: 337107071849631940}
+    uiButton: {fileID: 6307626564695001849}
+    key: 285
+  - actionName: Antirad
+    buttonText: {fileID: 7147705022224978199}
+    uiButton: {fileID: 8313861487860318248}
+    key: 284
+  - actionName: Energetic
+    buttonText: {fileID: 2535450013612211797}
+    uiButton: {fileID: 3823649370519059608}
+    key: 283
+  - actionName: AidSlot1
+    buttonText: {fileID: 7604770102124076500}
+    uiButton: {fileID: 1516055255806026904}
+    key: 292
+  - actionName: AidSlot2
+    buttonText: {fileID: 4185381838872604887}
+    uiButton: {fileID: 2631934899634971218}
+    key: 293
+  - actionName: DropItem
+    buttonText: {fileID: 4715094914359918626}
+    uiButton: {fileID: 3987930647558358255}
+    key: 8
+  - actionName: Detector
+    buttonText: {fileID: 2761623232889271840}
+    uiButton: {fileID: 4483434667929664554}
+    key: 111
+  - actionName: Extra2
+    buttonText: {fileID: 4492487189901174403}
+    uiButton: {fileID: 1053449834720027409}
+    key: 279
+  - actionName: Extra3
+    buttonText: {fileID: 9027821011553360107}
+    uiButton: {fileID: 3611318813334666910}
+    key: 280
+  - actionName: Extra4
+    buttonText: {fileID: 7769894260233595727}
+    uiButton: {fileID: 3073362437983127241}
+    key: 281
+  - actionName: Pause
+    buttonText: {fileID: 4261136912603251388}
+    uiButton: {fileID: 1825746888813823241}
+    key: 19
+  - actionName: Use
+    buttonText: {fileID: 2942053590618645299}
+    uiButton: {fileID: 5103412434052720409}
+    key: 102
+  - actionName: ScreenShot
+    buttonText: {fileID: 205389619960650319}
+    uiButton: {fileID: 347414349894969563}
+    key: 316
+  - actionName: Exit
+    buttonText: {fileID: 6033390072865566027}
+    uiButton: {fileID: 126368435969093974}
+    key: 27
+  - actionName: Console
+    buttonText: {fileID: 7848621737733660106}
+    uiButton: {fileID: 3504264344196631877}
+    key: 96
+  - actionName: SaveGame
+    buttonText: {fileID: 4991033834507458809}
+    uiButton: {fileID: 5367146305361036201}
+    key: 286
+  - actionName: LoadGame
+    buttonText: {fileID: 3163638676277529438}
+    uiButton: {fileID: 5134979057379229114}
+    key: 290
 --- !u!1 &2369484286502200127
 GameObject:
   m_ObjectHideFlags: 0
@@ -27181,7 +27313,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: "\u0420\u0435\u0436\u0438\u043C \u0441\u0442\u0440\u0435\u043B\u044C\u0431\u044B
-    \u043F\u0440\u0435\u0434."
+    \u0441\u043B\u0435\u0434."
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -36071,7 +36203,7 @@ PrefabInstance:
     - target: {fileID: 1484711937578297950, guid: 453806d5bfa8efe4b945e2ac1b06f35d,
         type: 3}
       propertyPath: m_Enabled
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1484711937578297950, guid: 453806d5bfa8efe4b945e2ac1b06f35d,
         type: 3}
@@ -36288,7 +36420,7 @@ PrefabInstance:
     - target: {fileID: 8609185485991460021, guid: 453806d5bfa8efe4b945e2ac1b06f35d,
         type: 3}
       propertyPath: m_Size
-      value: 0
+      value: 0.13707337
       objectReference: {fileID: 0}
     - target: {fileID: 8609185485991460021, guid: 453806d5bfa8efe4b945e2ac1b06f35d,
         type: 3}
