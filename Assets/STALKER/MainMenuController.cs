@@ -1,6 +1,7 @@
 using DarkTreeFPS;
 using System;
 using System.Collections;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -10,6 +11,33 @@ public class MainMenuController : MonoBehaviour
     public static MainMenuController Instance { get; private set; }
 
     [SerializeField] private GameObject _mainMenuCamera;
+    [SerializeField] private GameObject _mainMenuCanvas;
+
+    #region SAVE and SAVE_DEFAULT PATH
+    private string defaultSavePath
+    {
+        get
+        {
+            // поднимаемся на один уровень вверх 
+            string folderPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName, "Default");
+            if (!Directory.Exists(folderPath))
+                Directory.CreateDirectory(folderPath);
+            return Path.Combine(folderPath, "save_games_default.json");
+        }
+    }
+
+    private string savePath
+    {
+        get
+        {
+            // поднимаемся на один уровень вверх 
+            string folderPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName, "Saves");
+            if (!Directory.Exists(folderPath))
+                Directory.CreateDirectory(folderPath);
+            return Path.Combine(folderPath, "save_games.json");
+        }
+    }
+    #endregion
 
     /* ---------- UI ---------- */
     [Header("Кнопки главного меню")]
@@ -37,10 +65,11 @@ public class MainMenuController : MonoBehaviour
 
     /* ---------- Настройки ---------- */
     [Header("Настройки")]
-    public string newGameSceneName = "GameScene"; // Имя сцены для "Новой игры"
+    public string newGameSceneName = "Test1";
+    // public string newGameSceneName = "GameScene"; // Имя сцены для "Новой игры"
 
 
-    /* ---------- Внутреннее ---------- */
+    /* ---------- Внутреннее --------- */
     public bool IsActive => isMenuActive;
 
     private bool isMenuActive = true;
@@ -168,7 +197,7 @@ public class MainMenuController : MonoBehaviour
         currentGameScene = null;
     }
 
-    /* ---------- Кнопки главного меню ---------- */
+    #region /* ------- Кнопки главного меню -------- */
     private void StartNewGame()
     {
         StartCoroutine(LoadSceneAdditive(newGameSceneName));
@@ -201,8 +230,9 @@ public class MainMenuController : MonoBehaviour
         UnityEditor.EditorApplication.isPlaying = false;
 #endif
     }
+    #endregion
 
-    /* ---------- Additive Loader ---------- */
+    #region /* ---------- Additive Loader ---------- */
     private IEnumerator LoadSceneAdditive(string sceneName)
     {
         /* выгружаем предыдущую игровую, если есть */
@@ -226,10 +256,12 @@ public class MainMenuController : MonoBehaviour
         /* после загрузки — убираем меню и начинаем игру */
         SetMenuActive(false);
     }
+    #endregion
 }
 
 
-// КЛАСС - ЗАГЛУШКА         SAVE SYSTEM 
+// stub class SaveSystem
+// в игре используется другая система сохранения 
 public static class SaveSystem
 {
     private const string SAVE_KEY = "GameSave";

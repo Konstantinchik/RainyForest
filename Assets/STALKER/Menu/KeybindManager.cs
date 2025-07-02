@@ -45,13 +45,23 @@ public class KeybindManager : MonoBehaviour
         }
     }
 
-    private string savePath => Path.Combine(Application.persistentDataPath, "keybindings.json");
+    private string savePath
+    {
+        get
+        {
+            // поднимаемся на один уровень вверх 
+            string folderPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName, "Saves");
+            if (!Directory.Exists(folderPath))
+                Directory.CreateDirectory(folderPath);
+            return Path.Combine(folderPath, "keybindings.json");
+        }
+    }
 
 
     void Start()
     {
-        //LoadBindings();
-         SaveDefaultBindings(); // - для разработчиков
+        LoadBindings();
+        //SaveDefaultBindings(); // - для разработчиков
 
         InitControlUI();        // Привязываем UI
     }
