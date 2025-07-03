@@ -26,8 +26,48 @@ public class GameManager : MonoBehaviour
 
     public static GameManager Instance { get; private set; }
 
-    public bool IsPaused { get; private set; }
-    public bool IsInMainMenu { get; private set; }
+    public enum GameState
+    {
+        // Вступительная сцена (интро)
+        Intro,
+
+        // Главное меню (постоянная сцена), игра еще не загружена
+        MainMenu,
+
+        // Игра загружена и работает (не на паузе)
+        Gameplay,
+
+        // Игра загружена и на паузе (например, через кнопку паузы в игре)
+        GamePaused,
+
+        // Игра загружена, но открыто меню через ESC (автоматическая пауза)
+        // При возврате из этого состояния игра продолжается
+        InGameMenuWithAutoPause,
+
+        // Игра загружена, была на паузе, и открыто меню
+        // При возврате из этого состояния игра остается на паузе
+        InGameMenuFromPaused
+    }
+
+    // Событие при изменении состояния (можно подписаться из других скриптов)
+    public event Action<GameState> OnGameStateChanged;
+
+    // Текущее состояние игры (можно читать извне, но менять только внутри GameManager)
+    private GameState _currentState = GameState.Intro; // Начинаем с интро
+    
+    public GameState CurrentState
+    {
+        get => _currentState;
+        private set
+        {
+            if(_currentState!= value)
+            {
+                _currentState = value;
+                OnGameStateChanged?.Invoke(_currentState); // уведомляем подписчиков
+            }
+        }
+    }
+
 
     // будем вызывать их в нужных местах (UpdateMainMenuStatus, SetPaused и т.п.).
     // События будут статическими, чтобы на них можно было подписываться без ссылки на GameManager.Instance.
@@ -37,7 +77,7 @@ public class GameManager : MonoBehaviour
     public static event Action OnResumed;
     public static event Action<GameObject> OnPlayerSpawned;
 
-    private GameObject currentPlayer; // здесь ссылка на префаб игрока в сцене
+    private GameObject currentPlayer; // здесь ссылка на префаб игрока в сцене - ДИНАМИЧЕСКАЯ
 
     private const string MainMenuSceneName = "MainMenu_P";
 
