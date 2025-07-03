@@ -1,281 +1,183 @@
-using DarkTreeFPS;
-using System;
-using System.Collections;
-using System.IO;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.Collections;
 
 public class MainMenuController : MonoBehaviour
 {
-    public static MainMenuController Instance { get; private set; }
+    [Header("Main Menu References")]
+    [SerializeField] private Button newGameButton;      // без панели запроса
+    [SerializeField] private Button resumeButton;       // без панели запроса
+    [SerializeField] private Button loadGameButton;
+    [SerializeField] private Button saveGameButton;
+    [SerializeField] private Button lastSaveButton;     // Загрузить последнее сохранение?
+    [SerializeField] private Button leaveGameButton;    // Желаете покинуть игру?
+    [SerializeField] private Button optionsButton;
+    [SerializeField] private Button creditsButton;
+    [SerializeField] private Button exitButton;
 
-    [SerializeField] private GameObject _mainMenuCamera;
-    [SerializeField] private GameObject _mainMenuCanvas;
+    [Header("Load Game References")]
+    [SerializeField] private GameObject loadGamePanel;
+    [SerializeField] private Button loadGameBackButton;
 
-    #region SAVE and SAVE_DEFAULT PATH
-    private string defaultSavePath
-    {
-        get
-        {
-            // поднимаемся на один уровень вверх 
-            string folderPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName, "Default");
-            if (!Directory.Exists(folderPath))
-                Directory.CreateDirectory(folderPath);
-            return Path.Combine(folderPath, "save_games_default.json");
-        }
-    }
+    [Header("Save Game References")]
+    [SerializeField] private GameObject saveGamePanel;
+    [SerializeField] private Button saveGameBackButton;
 
-    private string savePath
-    {
-        get
-        {
-            // поднимаемся на один уровень вверх 
-            string folderPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName, "Saves");
-            if (!Directory.Exists(folderPath))
-                Directory.CreateDirectory(folderPath);
-            return Path.Combine(folderPath, "save_games.json");
-        }
-    }
-    #endregion
+    [Header("Last Save Game References")]
+    [SerializeField] private GameObject lastSaveGamePanel;
+    [SerializeField] private Button lastSaveGameBackButton;
 
-    /* ---------- UI ---------- */
-    [Header("Кнопки главного меню")]
-    public Button newGameButton;
-    public Button resumeGameButton;
-    public Button loadGameButton;
-    public Button optionsButton;
-    public Button exitButton;
+    [Header("Options References")]
+    [SerializeField] private GameObject optionsPanel;
+    [SerializeField] private Button optionsBackButton;
 
-    /* ---------- UI Quit ---------- */
-    [Header("Кнопки меню выхода")]
-    public Button exitGameButton;
-    public Button noExitGameButton;
+    [Header("Exit Confirmation")]
+    [SerializeField] private GameObject exitConfirmPanel;
+    [SerializeField] private Button exitConfirmButton;
+    [SerializeField] private Button exitCancelButton;
 
-    [Header("Панели главного меню")]
-    public GameObject optionsPanel;          // вкладки настроек
-    public GameObject exitGamePanel;         // панель подтверждения выхода
-    public GameObject pauseMenuPanel;        // если есть отдельная панель паузы
+    [Header("Settings")]
+    [SerializeField] private string firstLevelName = "Level1"; //
 
-    [Header("Панели меню настроек")]
-    public GameObject videoPanel;          
-    public GameObject soundPanel;         
-    public GameObject gamePanel;  
-    public GameObject controlPanel;
-
-    /* ---------- Настройки ---------- */
-    [Header("Настройки")]
-    public string newGameSceneName = "Test1";
-    // public string newGameSceneName = "GameScene"; // Имя сцены для "Новой игры"
-
-
-    /* ---------- Внутреннее --------- */
-    public bool IsActive => isMenuActive;
-
-    private bool isMenuActive = true;
-    private string currentGameScene;
-
-    #region Unity Lifecycle
     private void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-        Instance = this;
-
-        DontDestroyOnLoad(gameObject);
-        SceneManager.sceneLoaded += OnSceneLoaded;
-    }
-
-    private void Start()
-    {
-
-        // PlayerPrefs.DeleteAll();
-
-        // Подписываем методы на кнопки
+        // Инициализация кнопок
         newGameButton.onClick.AddListener(StartNewGame);
-        resumeGameButton.onClick.AddListener(ResumeGame);
-        loadGameButton.onClick.AddListener(LoadGame);
-        optionsButton.onClick.AddListener(ToggleOptions);
-        exitButton.onClick.AddListener(ShowExitPanel);
 
-        // Панель выхода
-        exitGameButton.onClick.AddListener(ExitGame);
-        noExitGameButton.onClick.AddListener(CloseExitPanel);
+        resumeButton.onClick.AddListener(ResumeGame);
 
-        resumeGameButton.interactable = SaveSystem.HasSave();
+        loadGameButton.onClick.AddListener(ShowLoadGame);
 
+        saveGameButton.onClick.AddListener(ShowSaveGame);
+
+        lastSaveButton.onClick.AddListener(ShowLastSavedGame);
+
+        leaveGameButton.onClick.AddListener(ShowLeaveGame);
+
+        optionsButton.onClick.AddListener(ShowOptions);
+        optionsBackButton.onClick.AddListener(HideOptions);
+
+        creditsButton.onClick.AddListener(ShowCredits);
+
+        exitButton.onClick.AddListener(ShowExitConfirm);
+        exitCancelButton.onClick.AddListener(HideExitConfirm);
+        exitConfirmButton.onClick.AddListener(ExitGame);
+
+
+        // Проверяем доступность кнопки продолжения
+        resumeButton.interactable = SaveSystem.HasSave();
     }
 
-    private void CloseExitPanel()
+    #region [Start New Game]
+    private void StartNewGame()
     {
-        exitGamePanel.SetActive(false);
-    }
-
-    private void ShowExitPanel()
-    {
-        exitGamePanel.SetActive(true);
-    }
-
-    private void OnDestroy()
-    {
-        if (Instance == this)
-        {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
-            Instance = null;
-        }
+        SaveSystem.CreateNewSave();
+        // Загружаем сцену через GameManager
+        GameManager.Instance.LoadGameScene(firstLevelName);
     }
     #endregion
 
-    /* ---------- Scene Events ---------- */
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        /* Если это не MainMenu_P, запоминаем как «текущую игровую» */
-        if (scene.name != "MainMenu_P")
-        {
-            currentGameScene = scene.name;
-            /* меню должно быть скрыто, игра на паузу — отключена */
-            SetMenuActive(false);
-        }
-    }
 
-
-    /* ---------- Меню On/Off ---------- */
-    private void SetMenuActive(bool active)
-    {
-        isMenuActive = active;
-
-        /* Активируем / прячем все дочерние UI-элементы */
-        foreach (Transform child in transform)
-        {
-            if (child.gameObject != gameObject)
-                child.gameObject.SetActive(active);
-        }
-
-        // Управление главной камерой меню
-        if (_mainMenuCamera != null)
-            _mainMenuCamera.SetActive(active);
-
-        /* Управление музыкой и временем */
-        if (active)
-        {
-            SoundController.Instance.PlayMenuMusic();
-            Time.timeScale = 0f;
-        }
-        else
-        {
-            SoundController.Instance.StopMenuMusic();
-            Time.timeScale = 1f;
-            if (optionsPanel != null) optionsPanel.SetActive(false);
-            if (pauseMenuPanel != null) pauseMenuPanel.SetActive(false);
-        }
-    }
-
-    /* ---------- API для Pause-меню ---------- */
-    public void ReturnToMainMenu()          // вызывается кнопкой "Main Menu"
-    {
-        /* выключаем паузу */
-        Time.timeScale = 0f;
-        /* выгружаем текущую игровую сцену, если она есть */
-        if (!string.IsNullOrEmpty(currentGameScene))
-            StartCoroutine(UnloadCurrentGameScene());
-
-        /* показываем главное меню */
-        SetMenuActive(true);
-    }
-
-    private IEnumerator UnloadCurrentGameScene()
-    {
-        AsyncOperation op = SceneManager.UnloadSceneAsync(currentGameScene);
-        while (!op.isDone) yield return null;
-
-        // Уведомляем GameManager
-        GameManager.Instance.RemoveGameScene(currentGameScene);
-
-        currentGameScene = null;
-    }
-
-    #region /* ------- Кнопки главного меню -------- */
-    private void StartNewGame()
-    {
-        StartCoroutine(LoadSceneAdditive(newGameSceneName));
-    }
-
+    #region [Resume Game]
     private void ResumeGame()
     {
         if (SaveSystem.HasSave())
         {
-            /* тут может быть своя логика загрузки прогресса */
-            StartCoroutine(LoadSceneAdditive(newGameSceneName));
+            string lastLevel = SaveSystem.GetLastLevel();
+            // Загружаем последний уровень или первый, если сохранение не содержит уровня
+            GameManager.Instance.LoadGameScene(!string.IsNullOrEmpty(lastLevel) ? lastLevel : firstLevelName);
         }
     }
+    #endregion
 
-    private void LoadGame()
+    #region [Load Game UI Panel]
+    private void ShowLoadGame()
     {
-        /* заглушка под выбор слота и т.д. */
-        StartCoroutine(LoadSceneAdditive(newGameSceneName));
+        UIManager.Instance.ShowLoadGameMenu();
+    }
+    private void HideLoadGame()
+    {
+        UIManager.Instance.HideLoadGameMenu();
+    }
+    #endregion
+
+    #region [Save Game UI Panel]
+    private void ShowSaveGame()
+    {
+        UIManager.Instance.ShowSaveGameMenu();
+    }
+    private void HideSaveGame()
+    {
+        UIManager.Instance.HideSaveGameMenu();
+    }
+    #endregion
+
+    #region [Last Saved Game UI Panel]
+    private void ShowLastSavedGame()
+    {
+        UIManager.Instance.ShowSaveGameMenu();
+    }
+    private void HideLastSavedGame()
+    {
+        UIManager.Instance.ShowSaveGameMenu();
+    }
+    #endregion
+
+    #region [Leave Game UI Panel]
+    private void ShowLeaveGame()
+    {
+        UIManager.Instance.ShowSaveGameMenu();
+    }
+    private void HideLeaveGame()
+    {
+        UIManager.Instance.ShowSaveGameMenu();
+    }
+    #endregion
+
+    #region [Options UI Panel]
+    private void ShowOptions()
+    {
+        UIManager.Instance.ShowOptionsMenu();
     }
 
-    private void ToggleOptions()
+    private void HideOptions()
     {
-        if (optionsPanel != null) optionsPanel.SetActive(!optionsPanel.activeSelf);
+        UIManager.Instance.HideOptionsMenu();
+    }
+    #endregion
+
+    #region [Creditss UI Panel]
+    private void ShowCredits()
+    {
+        UIManager.Instance.ShowCreditsMenu();
     }
 
+    private void HideCredits()
+    {
+        UIManager.Instance.HideCreditsMenu();
+    }
+    #endregion
+
+    #region [Exit Confirm UI Panel]
+    private void ShowExitConfirm()
+    {
+        exitConfirmPanel.SetActive(true);
+    }
+
+    private void HideExitConfirm()
+    {
+        exitConfirmPanel.SetActive(false);
+    }
+    #endregion
+
+    #region [ExitGame - action]
     private void ExitGame()
     {
-        Application.Quit();
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
 #endif
     }
     #endregion
-
-    #region /* ---------- Additive Loader ---------- */
-    private IEnumerator LoadSceneAdditive(string sceneName)
-    {
-        /* выгружаем предыдущую игровую, если есть */
-        if (!string.IsNullOrEmpty(currentGameScene))
-        {
-            AsyncOperation unload = SceneManager.UnloadSceneAsync(currentGameScene);
-            while (!unload.isDone) yield return null;
-        }
-
-        /* загружаем новую */
-        AsyncOperation load = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
-        while (!load.isDone) yield return null;
-
-        Scene loadedScene = SceneManager.GetSceneByName(sceneName);
-        SceneManager.SetActiveScene(loadedScene);
-        currentGameScene = sceneName;
-
-        // Уведомляем GameManager о загрузке
-        GameManager.Instance.AddGameScene(sceneName);
-
-        /* после загрузки — убираем меню и начинаем игру */
-        SetMenuActive(false);
-    }
-    #endregion
-}
-
-
-// stub class SaveSystem
-// в игре используется другая система сохранения 
-public static class SaveSystem
-{
-    private const string SAVE_KEY = "GameSave";
-
-    // Проверяем, есть ли сохранение
-    public static bool HasSave()
-    {
-        return PlayerPrefs.HasKey(SAVE_KEY);
-    }
-
-    // Загружаем данные
-    public static void LoadGame()
-    {
-        string json = PlayerPrefs.GetString(SAVE_KEY);
-        // Десериализуем json в игровые данные
-    }
 }

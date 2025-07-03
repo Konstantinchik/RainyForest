@@ -4,135 +4,67 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
+/// <summary>
+/// Центральный менеджер игры, управляющий состояниями, сценами и событиями
+/// Запускается в сцене Intro раньше всех
+/// </summary>
 public class GameManager : MonoBehaviour
 {
-    // СПИСОК МЕТОДОВ
-
-    // public static void NotifyPlayerSpawned(GameObject player)
-    // private void HandlePlayerSpawned(GameObject player)
-
-    // private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    // private void OnSceneUnloaded(Scene scene)
-    // private void UpdateMainMenuStatus()
-    // public void SetPaused(bool isPaused)
-    // public void TogglePause()
-    // void SetMainMenu()
-    // void QuitCurrentMenu()
-    // public void UnloadAllGameScenes()
-    // public void AddGameScene(string sceneName)
-    // public void RemoveGameScene(string sceneName)
-
+    #region Singleton
     public static GameManager Instance { get; private set; }
+    #endregion
 
+    #region Game State
     public enum GameState
     {
-        // Вступительная сцена (интро)
-        Intro,
-
-        // Главное меню (постоянная сцена), игра еще не загружена
-        MainMenu,
-
-        // Игра загружена и работает (не на паузе)
-        Gameplay,
-
-        // Игра загружена и на паузе (например, через кнопку паузы в игре)
-        GamePaused,
-
-        // Игра загружена, но открыто меню через ESC (автоматическая пауза)
-        // При возврате из этого состояния игра продолжается
-        InGameMenuWithAutoPause,
-
-        // Игра загружена, была на паузе, и открыто меню
-        // При возврате из этого состояния игра остается на паузе
-        InGameMenuFromPaused
+        Intro,                  // Вступительная сцена
+        MainMenu,               // Главное меню (persistent сцена)
+        Gameplay,               // Идет геймплей
+        GamePaused,             // Игра на паузе (через кнопку паузы)
+        InGameMenuAutoPaused,   // Меню в игре (автопауза)
+        InGameMenuManualPaused  // Меню в игре (ручная пауза)
     }
 
-    // Событие при изменении состояния (можно подписаться из других скриптов)
-    public event Action<GameState> OnGameStateChanged;
-
-    // Текущее состояние игры (можно читать извне, но менять только внутри GameManager)
-    private GameState _currentState = GameState.Intro; // Начинаем с интро
-    
+    private GameState _currentState = GameState.Intro;
     public GameState CurrentState
     {
         get => _currentState;
         private set
         {
-            if(_currentState!= value)
+            if (_currentState != value)
             {
+                var previousState = _currentState;
                 _currentState = value;
-                OnGameStateChanged?.Invoke(_currentState); // уведомляем подписчиков
+                OnGameStateChanged?.Invoke(previousState, _currentState);
             }
         }
     }
+    #endregion
 
+    #region Events
+    // Основные события игры
+    public event Action<GameState, GameState> OnGameStateChanged; // Старое и новое состояние
+    public static event Action OnGameStarted;                     // При переходе в Gameplay
+    public static event Action OnGamePaused;                      // При любой паузе
+    public static event Action OnGameResumed;                     // При снятии паузы
+    public static event Action OnReturnedToMenu;                  // Возврат в главное меню
+    public static event Action<GameObject> OnPlayerSpawned;       // При спавне игрока
+    #endregion
 
-    // будем вызывать их в нужных местах (UpdateMainMenuStatus, SetPaused и т.п.).
-    // События будут статическими, чтобы на них можно было подписываться без ссылки на GameManager.Instance.
-    public static event Action OnGameEntered;
-    public static event Action OnReturnedToMenu;
-    public static event Action OnPaused;
-    public static event Action OnResumed;
-    public static event Action<GameObject> OnPlayerSpawned;
-
-    private GameObject currentPlayer; // здесь ссылка на префаб игрока в сцене - ДИНАМИЧЕСКАЯ
-
+    #region Scene Management
     private const string MainMenuSceneName = "MainMenu_P";
-
-    // Список загруженных аддитивных сцен
     public List<string> LoadedGameScenes { get; private set; } = new List<string>();
+    private GameObject _currentPlayer;
+    #endregion
 
+    #region Unity Callbacks
     private void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
-
-        IsInMainMenu = true; // Когда загружается MainMenu_P - это MainMenu
-
+        InitializeSingleton();
         SceneManager.sceneLoaded += OnSceneLoaded;
         SceneManager.sceneUnloaded += OnSceneUnloaded;
-
-        // UpdateMainMenuStatus будет отслеживать изменение состояния и вызывать нужное событие.
-        UpdateMainMenuStatus();
     }
-
-    #region Подписка и отписка на Спавн игрока. Обработка спавна
-    private void OnEnable()
-    {
-        OnPlayerSpawned += HandlePlayerSpawned;
-    }
-
-    private void OnDisable()
-    {
-        OnPlayerSpawned -= HandlePlayerSpawned;
-    }
-
-    // Вызов события когда Player готов
-    public static void NotifyPlayerSpawned(GameObject player)
-    {
-        OnPlayerSpawned?.Invoke(player);
-    }
-
-    private void HandlePlayerSpawned(GameObject player)
-    {
-        currentPlayer = player;
-        Debug.Log($"[GameManager] Player spawned: {player.name}");
-
-        // Можешь здесь получить доступ к нужным компонентам:
-        var stats = player.GetComponent<PlayerStats>();
-        var cam = player.GetComponentInChildren<Camera>();
-
-        // Или передать их в другие менеджеры (UIManager, AudioManager и т.д.)
-    }
-    #endregion
 
     private void OnDestroy()
     {
@@ -144,18 +76,109 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        HandleEscapeInput();
+        HandleDebugInput();
+    }
+    #endregion
+
+    #region Initialization
+    private void InitializeSingleton()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+    #endregion
+
+    #region State Management
     /// <summary>
-    /// Когда загружаем аддитивную сцену, добавляем её в список
+    /// Переключает состояние паузы
     /// </summary>
-    /// <param name="scene"></param>
+    public void TogglePause()
+    {
+        if (CurrentState == GameState.MainMenu) return;
+
+        bool shouldPause = CurrentState switch
+        {
+            GameState.Gameplay => true,
+            _ => false
+        };
+
+        SetPaused(shouldPause);
+    }
+
+    /// <summary>
+    /// Устанавливает состояние паузы
+    /// </summary>
+    public void SetPaused(bool paused)
+    {
+        if (CurrentState == GameState.MainMenu) return;
+
+        if (paused)
+        {
+            CurrentState = CurrentState == GameState.GamePaused ?
+                GameState.InGameMenuManualPaused :
+                GameState.InGameMenuAutoPaused;
+
+            Time.timeScale = 0f;
+            OnGamePaused?.Invoke();
+        }
+        else
+        {
+            CurrentState = GameState.Gameplay;
+            Time.timeScale = 1f;
+            OnGameResumed?.Invoke();
+        }
+    }
+
+    /// <summary>
+    /// Переключает между игрой и главным меню
+    /// </summary>
+    public void ToggleMainMenu()
+    {
+        if (CurrentState == GameState.MainMenu)
+            StartGame();
+        else
+            ReturnToMenu();
+    }
+
+    /// <summary>
+    /// Запускает игру (из главного меню)
+    /// </summary>
+    public void StartGame()
+    {
+        UnloadAllGameScenes();
+        // Здесь должна быть логика загрузки начальной игровой сцены
+        CurrentState = GameState.Gameplay;
+        OnGameStarted?.Invoke();
+    }
+
+    /// <summary>
+    /// Возвращает в главное меню
+    /// </summary>
+    public void ReturnToMenu()
+    {
+        UnloadAllGameScenes();
+        SceneManager.SetActiveScene(SceneManager.GetSceneByName(MainMenuSceneName));
+        CurrentState = GameState.MainMenu;
+        OnReturnedToMenu?.Invoke();
+    }
+    #endregion
+
+    #region Scene Management
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (scene.name != MainMenuSceneName && !LoadedGameScenes.Contains(scene.name))
         {
             LoadedGameScenes.Add(scene.name);
         }
-
-        UpdateMainMenuStatus();
     }
 
     private void OnSceneUnloaded(Scene scene)
@@ -164,94 +187,10 @@ public class GameManager : MonoBehaviour
         {
             LoadedGameScenes.Remove(scene.name);
         }
-
-        UpdateMainMenuStatus();
-    }
-
-    private void UpdateMainMenuStatus()
-    {
-        bool newIsInMainMenu = LoadedGameScenes.Count == 0;
-
-        if (IsInMainMenu != newIsInMainMenu)
-        {
-            IsInMainMenu = newIsInMainMenu;
-
-            if (IsInMainMenu)
-            {
-                Debug.Log("[GameManager] Returned to Main Menu.");
-                OnReturnedToMenu?.Invoke();
-            }
-            else
-            {
-                Debug.Log("[GameManager] Game Entered.");
-                OnGameEntered?.Invoke();
-            }
-        }
     }
 
     /// <summary>
-    /// Вызывается при нажатии на Esc
-    /// </summary>
-    /// <param name="isPaused"></param>
-    public void SetPaused(bool isPaused)
-    {
-        if (IsInMainMenu) return;
-
-        if (IsPaused != isPaused)
-        {
-            IsPaused = isPaused;
-            Time.timeScale = isPaused ? 0f : 1f;
-
-            if (isPaused)
-            {
-                Debug.Log("[GameManager] Game Paused.");
-                OnPaused?.Invoke();
-            }
-            else
-            {
-                Debug.Log("[GameManager] Game Resumed.");
-                OnResumed?.Invoke();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Переключаем пауза-не пауза только если мы не в главном меню
-    /// </summary>
-    public void TogglePause()
-    {
-        if (!IsInMainMenu)
-            SetPaused(!IsPaused);
-    }
-
-    /// <summary>
-    /// Переключаем главное меню - игра
-    /// </summary>
-    public void ToggleMainMenu()
-    {
-        if (IsInMainMenu)
-            QuitCurrentMenu();
-        else
-            SetMainMenu();
-    }
-
-    void SetMainMenu()
-    {
-        Debug.Log("[GameManager] Switching to Main Menu...");
-        UnloadAllGameScenes();
-        SceneManager.SetActiveScene(SceneManager.GetSceneByName(MainMenuSceneName));
-        UpdateMainMenuStatus();
-    }
-
-    void QuitCurrentMenu()
-    {
-        Debug.Log("[GameManager] Leaving Main Menu...");
-        // Например, при старте игры — логика загрузки игровых сцен будет отдельно
-        UpdateMainMenuStatus();
-    }
-
-    /// <summary>
-    /// Выгружаются все аддитивно загруженные сцены
+    /// Выгружает все игровые сцены
     /// </summary>
     public void UnloadAllGameScenes()
     {
@@ -260,26 +199,22 @@ public class GameManager : MonoBehaviour
             SceneManager.UnloadSceneAsync(sceneName);
         }
         LoadedGameScenes.Clear();
-        UpdateMainMenuStatus();
     }
 
     /// <summary>
-    /// Когда загружаем локацию, добавляем её в список
+    /// Добавляет игровую сцену
     /// </summary>
-    /// <param name="sceneName"></param>
     public void AddGameScene(string sceneName)
     {
         if (!LoadedGameScenes.Contains(sceneName))
         {
             LoadedGameScenes.Add(sceneName);
-            UpdateMainMenuStatus();
         }
     }
 
     /// <summary>
-    /// Когда выгружаем локацию, удаляем её из списка
+    /// Удаляет игровую сцену
     /// </summary>
-    /// <param name="sceneName"></param>
     public void RemoveGameScene(string sceneName)
     {
         if (LoadedGameScenes.Contains(sceneName))
@@ -287,17 +222,114 @@ public class GameManager : MonoBehaviour
             LoadedGameScenes.Remove(sceneName);
         }
     }
+    #endregion
 
-    void Update()
+    #region Player Management
+    public static void NotifyPlayerSpawned(GameObject player)
+    {
+        Instance.HandlePlayerSpawned(player);
+        OnPlayerSpawned?.Invoke(player);
+    }
+
+    private void HandlePlayerSpawned(GameObject player)
+    {
+        _currentPlayer = player;
+        Debug.Log($"[GameManager] Player spawned: {player.name}");
+
+        // Инициализация компонентов игрока
+        var stats = player.GetComponent<PlayerStats>();
+        var cam = player.GetComponentInChildren<Camera>();
+    }
+    #endregion
+
+    #region Input Handling
+    private void HandleEscapeInput()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            TogglePause();
+            switch (CurrentState)
+            {
+                case GameState.Gameplay:
+                    SetPaused(true);
+                    break;
+                case GameState.InGameMenuAutoPaused:
+                case GameState.InGameMenuManualPaused:
+                    SetPaused(false);
+                    break;
+                case GameState.MainMenu:
+                    // Логика выхода из игры
+                    break;
+            }
         }
+    }
 
+    private void HandleDebugInput()
+    {
 #if UNITY_EDITOR
         if (Input.GetKeyDown(KeyCode.T))
             SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
 #endif
+    }
+    #endregion
+
+    #region Load Game Scene
+    public void LoadGameScene(string sceneName)
+    {
+        StartCoroutine(LoadSceneAdditive(sceneName));
+    }
+
+    private IEnumerator LoadSceneAdditive(string sceneName)
+    {
+        // Выгружаем предыдущие игровые сцены
+        UnloadAllGameScenes();
+
+        // Загружаем новую сцену
+        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive);
+        asyncLoad.allowSceneActivation = false;
+
+        while (!asyncLoad.isDone)
+        {
+            if (asyncLoad.progress >= 0.9f)
+            {
+                asyncLoad.allowSceneActivation = true;
+            }
+            yield return null;
+        }
+
+        Scene loadedScene = SceneManager.GetSceneByName(sceneName);
+        SceneManager.SetActiveScene(loadedScene);
+        AddGameScene(sceneName);
+        CurrentState = GameState.Gameplay;
+    }
+    #endregion
+}
+
+
+
+public static class SaveSystem
+{
+    private const string SAVE_KEY = "GameSave";
+    private const string LEVEL_KEY = "LastLevel";
+
+    public static bool HasSave()
+    {
+        return PlayerPrefs.HasKey(SAVE_KEY);
+    }
+
+    public static void CreateNewSave()
+    {
+        PlayerPrefs.SetInt(SAVE_KEY, 1);
+        PlayerPrefs.Save();
+    }
+
+    public static string GetLastLevel()
+    {
+        return PlayerPrefs.GetString(LEVEL_KEY, "");
+    }
+
+    public static void SaveLevel(string levelName)
+    {
+        PlayerPrefs.SetString(LEVEL_KEY, levelName);
+        PlayerPrefs.Save();
     }
 }

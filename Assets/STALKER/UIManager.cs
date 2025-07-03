@@ -1,80 +1,183 @@
 using UnityEngine;
+using static GameManager;
 
 public class UIManager : MonoBehaviour
 {
+    public static UIManager Instance { get; private set; }
+
     [Header("UI Panels")]
-    [SerializeField] private GameObject mainMenuUIPanel;
+    [SerializeField] private GameObject mainMenuPanel;
     [SerializeField] private GameObject pauseMenuPanel;
     [SerializeField] private GameObject hudPanel;
+    [SerializeField] private GameObject loadGamePanel;
+    [SerializeField] private GameObject saveGamePanel;
+    [SerializeField] private GameObject lastSavedGamePanel;
+    [SerializeField] private GameObject leaveGamePanel;
+    [SerializeField] private GameObject optionsPanel;
+    [SerializeField] private GameObject creditsPanel;
+    [SerializeField] private GameObject exitPanel;
 
+    #region [Awake singleton]
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
+    #endregion
+
+    #region [OnEnable / OnDisable +- HandleGameStateChanged]
     private void OnEnable()
     {
-        GameManager.OnGameEntered += HandleGameEntered;
-        GameManager.OnReturnedToMenu += HandleReturnedToMenu;
-        GameManager.OnPaused += HandlePaused;
-        GameManager.OnResumed += HandleResumed;
+        // Подписываемся через экземпляр GameManager
+        GameManager.Instance.OnGameStateChanged += HandleGameStateChanged;
     }
 
     private void OnDisable()
     {
-        GameManager.OnGameEntered -= HandleGameEntered;
-        GameManager.OnReturnedToMenu -= HandleReturnedToMenu;
-        GameManager.OnPaused -= HandlePaused;
-        GameManager.OnResumed -= HandleResumed;
+        // Отписываемся, если GameManager существует
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnGameStateChanged -= HandleGameStateChanged;
+        }
     }
+    #endregion
+
 
     private void Start()
     {
-        // Начальное состояние — отображается только главное меню
-        ShowMainMenu();
+        // Получаем текущее состояние при старте
+        UpdateUI(GameManager.Instance.CurrentState);
     }
 
-    private void HandleGameEntered()
+    private void HandleGameStateChanged(GameState previousState, GameState newState)
     {
-        HideAll();
-        ShowHUD();
+        UpdateUI(newState);
     }
 
-    private void HandleReturnedToMenu()
+    private void UpdateUI(GameState state)
     {
-        HideAll();
-        ShowMainMenu();
+        switch (state)
+        {
+            case GameState.Intro:
+                HideAll();
+                break;
+
+            case GameState.MainMenu:
+                HideAll();
+                mainMenuPanel?.SetActive(true);
+                break;
+
+            case GameState.Gameplay:
+                HideAll();
+                hudPanel?.SetActive(true);
+                break;
+
+            case GameState.GamePaused:
+            case GameState.InGameMenuAutoPaused:
+            case GameState.InGameMenuManualPaused:
+                if (hudPanel != null) hudPanel?.SetActive(true);
+                pauseMenuPanel?.SetActive(true);
+                break;
+        }
     }
 
-    private void HandlePaused()
+    #region [LoadGameMenu]
+    public void ShowLoadGameMenu()
     {
-        ShowPauseMenu();
+        loadGamePanel?.SetActive(true);
     }
 
-    private void HandleResumed()
+    public void HideLoadGameMenu()
     {
-        HidePauseMenu();
+        loadGamePanel?.SetActive(false);
     }
+    #endregion
 
-    private void ShowMainMenu()
+    #region [SaveGameMenu]
+    public void ShowSaveGameMenu()
     {
-        mainMenuUIPanel?.SetActive(true);
+        saveGamePanel?.SetActive(true);
     }
 
-    private void ShowHUD()
+    public void HideSaveGameMenu()
     {
-        if (hudPanel != null) hudPanel?.SetActive(true);
+        saveGamePanel?.SetActive(false);
     }
+    #endregion
 
-    private void ShowPauseMenu()
+    #region [LastSavedGameMenu]
+    public void ShowLastSavedGameMenu()
     {
-        pauseMenuPanel?.SetActive(true);
+        lastSavedGamePanel?.SetActive(true);
     }
 
-    private void HidePauseMenu()
+    public void HideLastSavedGameMenu()
     {
-        pauseMenuPanel?.SetActive(false);
+        lastSavedGamePanel?.SetActive(false);
+    }
+    #endregion
+
+    #region [LeaveGameMenu]
+    public void ShowLeaveGameMenu()
+    {
+        leaveGamePanel?.SetActive(true);
     }
 
+    public void HideLeaveGameMenu()
+    {
+        leaveGamePanel?.SetActive(false);
+    }
+    #endregion
+
+    #region [OptionsMenu]
+    public void ShowOptionsMenu()
+    {
+        optionsPanel?.SetActive(true);
+    }
+
+    public void HideOptionsMenu()
+    {
+        optionsPanel?.SetActive(false);
+    }
+    #endregion
+
+    #region [CreditsMenu]
+    public void ShowCreditsMenu()
+    {
+        creditsPanel?.SetActive(true);
+    }
+
+    public void HideCreditsMenu()
+    {
+        creditsPanel?.SetActive(false);
+    }
+    #endregion
+
+    #region [ExitMenu]
+    public void ShowExitMenu()
+    {
+        exitPanel?.SetActive(true);
+    }
+
+    public void HideExitMenu()
+    {
+        exitPanel?.SetActive(false);
+    }
+    #endregion
     private void HideAll()
     {
-        mainMenuUIPanel?.SetActive(false);
+        mainMenuPanel?.SetActive(false);
         pauseMenuPanel?.SetActive(false);
-        if (hudPanel != null) hudPanel?.SetActive(false);
+        hudPanel?.SetActive(false);
+        loadGamePanel?.SetActive(false);
+        saveGamePanel?.SetActive(false);
+        lastSavedGamePanel?.SetActive(false);
+        optionsPanel?.SetActive(false);
+        creditsPanel?.SetActive(false);
     }
 }

@@ -11,13 +11,12 @@ public class Intro : MonoBehaviour
     {
         sceneID = 1;
         StartCoroutine(LoadLevel());
-
     }
 
     IEnumerator LoadLevel()
     {
         yield return new WaitForSeconds(3f);
-        asyncOperation = SceneManager.LoadSceneAsync(sceneID);
+        asyncOperation = SceneManager.LoadSceneAsync(sceneID, LoadSceneMode.Single);
         while (!asyncOperation.isDone)
         {
             // отображаем прогресс
