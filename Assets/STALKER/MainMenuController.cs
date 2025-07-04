@@ -55,7 +55,6 @@ public class MainMenuController : MonoBehaviour
         leaveGameButton.onClick.AddListener(ShowLeaveGame);
 
         optionsButton.onClick.AddListener(ShowOptions);
-        optionsBackButton.onClick.AddListener(HideOptions);
 
         creditsButton.onClick.AddListener(ShowCredits);
 
@@ -63,6 +62,8 @@ public class MainMenuController : MonoBehaviour
         exitCancelButton.onClick.AddListener(HideExitConfirm);
         exitConfirmButton.onClick.AddListener(ExitGame);
 
+
+        //optionsBackButton.onClick.AddListener(HideOptions);
 
         // Проверяем доступность кнопки продолжения
         resumeButton.interactable = SaveSystem.HasSave();
