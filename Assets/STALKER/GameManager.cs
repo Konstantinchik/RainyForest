@@ -26,7 +26,9 @@ public class GameManager : MonoBehaviour
         InGameMenuManualPaused  // Меню в игре (ручная пауза)
     }
 
-    private GameState _currentState = GameState.Intro;
+    private GameState _currentState; // = GameState.Intro; - здесь не срабатывает
+    private GameState _stateBeforeMenu; // Храним предыдущее состояние перед выходом в меню по Esc
+
     public GameState CurrentState
     {
         get => _currentState;
@@ -37,6 +39,7 @@ public class GameManager : MonoBehaviour
                 var previousState = _currentState;
                 _currentState = value;
                 OnGameStateChanged?.Invoke(previousState, _currentState);
+                Debug.Log("Current State 1 :" + _currentState); // срабатывает только при смене
             }
         }
     }
@@ -94,8 +97,23 @@ public class GameManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        _currentState = GameState.Intro;
+        Debug.Log("Current State : " + _currentState);
+
+        // Запускаем корутину для загрузки меню с задержкой
+        StartCoroutine(LoadMainMenuWithDelay());
     }
     #endregion
+
+    private IEnumerator LoadMainMenuWithDelay()
+    {
+        // Ждем 3 секунды для показа заставки
+        yield return new WaitForSeconds(3f);
+
+        // Загружаем MainMenu_P как единственную сцену
+        SceneManager.LoadScene(MainMenuSceneName, LoadSceneMode.Single);
+        Debug.Log("MainMenu loaded after splash screen");
+    }
 
     #region State Management
     /// <summary>
@@ -161,18 +179,69 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Возвращает в главное меню
+    /// Возвращает в главное меню (без перезагрузки сцены, просто активирует UI)
+    /// Возвращает в игру
     /// </summary>
     public void ReturnToMenu()
     {
+        // 1. Сохраняем текущее состояние перед переходом в меню
+        _stateBeforeMenu = CurrentState;
+
+        // 2. Выгружаем игровые сцены
         UnloadAllGameScenes();
-        SceneManager.SetActiveScene(SceneManager.GetSceneByName(MainMenuSceneName));
+
+        // 3. Активируем главное меню
+        var mainMenuScene = SceneManager.GetSceneByName(MainMenuSceneName);
+        if (!mainMenuScene.isLoaded)
+        {
+            SceneManager.LoadScene(MainMenuSceneName, LoadSceneMode.Single);
+        }
+        else
+        {
+            SceneManager.SetActiveScene(mainMenuScene);
+        }
+
+        // 4. Устанавливаем состояние меню
         CurrentState = GameState.MainMenu;
         OnReturnedToMenu?.Invoke();
+
+        // 5. Обновляем UI
+        UIManager.Instance?.ShowMainMenu();
+    }
+
+    /// <summary>
+    /// Возвращает в игру
+    /// </summary>
+    public void ReturnToGame()
+    {
+        // Возвращаемся в предыдущее состояние
+        if (_stateBeforeMenu == GameState.InGameMenuAutoPaused ||
+            _stateBeforeMenu == GameState.InGameMenuManualPaused)
+        {
+            CurrentState = _stateBeforeMenu;
+            UIManager.Instance?.ShowPauseMenu(_stateBeforeMenu);
+        }
+        else
+        {
+            // Если не было паузы, возвращаемся в обычный геймплей
+            CurrentState = GameState.Gameplay;
+            Time.timeScale = 1f;
+            UIManager.Instance?.HideAllPauseMenus();
+        }
     }
     #endregion
 
     #region Scene Management
+    /// <summary>
+    /// Загружает главное меню (не аддитивно, выгружая все остальные сцены)
+    /// </summary>
+    public void LoadMainMenuScene()
+    {
+        SceneManager.LoadScene(MainMenuSceneName, LoadSceneMode.Single);
+        CurrentState = GameState.MainMenu;
+        Debug.Log($"MainMenu loaded. CurrentState: {CurrentState}");
+    }
+
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (scene.name != MainMenuSceneName && !LoadedGameScenes.Contains(scene.name))
@@ -296,10 +365,21 @@ public class GameManager : MonoBehaviour
             yield return null;
         }
 
+        // Ждем еще один кадр, чтобы убедиться, что сцена полностью загружена
+        yield return null;
+
         Scene loadedScene = SceneManager.GetSceneByName(sceneName);
+        if (!loadedScene.IsValid() || !loadedScene.isLoaded)
+        {
+            Debug.LogError($"Failed to load scene: {sceneName}");
+            yield break;
+        }
+
         SceneManager.SetActiveScene(loadedScene);
         AddGameScene(sceneName);
+
         CurrentState = GameState.Gameplay;
+        Debug.Log($"Scene loaded: {sceneName}, State changed to: {CurrentState}");
     }
     #endregion
 }

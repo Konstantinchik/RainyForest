@@ -1,4 +1,6 @@
+using System;
 using UnityEngine;
+using UnityEngine.Rendering;
 using static GameManager;
 
 public class UIManager : MonoBehaviour
@@ -26,7 +28,7 @@ public class UIManager : MonoBehaviour
             return;
         }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        //DontDestroyOnLoad(gameObject); - меню существует только в MainMenu_P
     }
     #endregion
 
@@ -179,5 +181,33 @@ public class UIManager : MonoBehaviour
         lastSavedGamePanel?.SetActive(false);
         optionsPanel?.SetActive(false);
         creditsPanel?.SetActive(false);
+    }
+
+    public void ShowMainMenu()
+    {
+        HideAll();
+        mainMenuPanel?.SetActive(true);
+    }
+
+    internal void ShowPauseMenu(GameState pauseType)
+    {
+        HideAll();
+        hudPanel?.SetActive(true);
+
+        switch (pauseType)
+        {
+            case GameManager.GameState.InGameMenuAutoPaused:
+                autoPauseMenu?.SetActive(true);
+                break;
+
+            case GameManager.GameState.InGameMenuManualPaused:
+                manualPauseMenu?.SetActive(true);
+                break;
+        }
+    }
+
+    internal void HideAllPauseMenus()
+    {
+        //throw new NotImplementedException();
     }
 }
