@@ -21,6 +21,11 @@ public class KeybindManager : MonoBehaviour
     public Toggle inverseMouseToggle;
     public Scrollbar scrollBar;
 
+    [Header("Применить или отменить")]
+    public Button defaultButton;
+    public Button appluButton;
+    public Button cancelButton;
+
     [Serializable]
     public class KeyBindingData
     {
@@ -33,6 +38,7 @@ public class KeybindManager : MonoBehaviour
     private int listeningIndex = -1;     // Текущий индекс действия, ожидающего ввода
     private Dictionary<KeyCode, int> keyToActionIndex = new(); // Клавиша → индекс действия
 
+    #region [Set Save Path]
     private string defaultSavePath
     {
         get
@@ -50,13 +56,13 @@ public class KeybindManager : MonoBehaviour
         get
         {
             // поднимаемся на один уровень вверх 
-            string folderPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName, "Saves");
+            string folderPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName, "Options");
             if (!Directory.Exists(folderPath))
                 Directory.CreateDirectory(folderPath);
             return Path.Combine(folderPath, "keybindings.json");
         }
     }
-
+    #endregion
 
     void Start()
     {
@@ -151,7 +157,7 @@ public class KeybindManager : MonoBehaviour
         RefreshButtonLabel(index);
     }
 
-    #region SAVE and LOAD DEFAULT
+    #region SAVE and LOAD DEFAULT Bindings
     
     // For DEVELOPERS ONLY
     public void SaveDefaultBindings()
@@ -202,7 +208,7 @@ public class KeybindManager : MonoBehaviour
 
     #endregion
 
-    #region SAVE and LOAD
+    #region SAVE and LOAD Bindings
 
     public void SaveBindings()
     {
@@ -246,6 +252,7 @@ public class KeybindManager : MonoBehaviour
 
     #endregion
 
+    #region [Get Key]
     string GetKeyLabel(KeyCode key)
     {
         if (key == KeyCode.None) return " --";
@@ -301,6 +308,7 @@ public class KeybindManager : MonoBehaviour
                 return b.key;
         return KeyCode.None;
     }
+    #endregion
 
     void RefreshButtonLabel(int index)
     {
