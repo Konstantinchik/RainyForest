@@ -189,6 +189,7 @@ public class UIManager : MonoBehaviour
         mainMenuPanel?.SetActive(true);
     }
 
+    
     internal void ShowPauseMenu(GameState pauseType)
     {
         HideAll();
@@ -197,17 +198,17 @@ public class UIManager : MonoBehaviour
         switch (pauseType)
         {
             case GameManager.GameState.InGameMenuAutoPaused:
-                autoPauseMenu?.SetActive(true);
+                hudPanel?.SetActive(true);
                 break;
 
             case GameManager.GameState.InGameMenuManualPaused:
-                manualPauseMenu?.SetActive(true);
+                pauseMenuPanel?.SetActive(true);
                 break;
         }
     }
-
+    
     internal void HideAllPauseMenus()
     {
-        //throw new NotImplementedException();
+        hudPanel?.SetActive(true);
     }
 }

@@ -26,7 +26,9 @@ public class GameManager : MonoBehaviour
         InGameMenuManualPaused  // Меню в игре (ручная пауза)
     }
 
-    private GameState _currentState; // = GameState.Intro; - здесь не срабатывает
+    private GameObject player;
+
+    private GameState _currentState;    // = GameState.Intro; - здесь не срабатывает
     private GameState _stateBeforeMenu; // Храним предыдущее состояние перед выходом в меню по Esc
 
     public GameState CurrentState
@@ -111,8 +113,35 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(3f);
 
         // Загружаем MainMenu_P как единственную сцену
-        SceneManager.LoadScene(MainMenuSceneName, LoadSceneMode.Single);
+        AsyncOperation asyncLoad = SceneManager.LoadSceneAsync(MainMenuSceneName, LoadSceneMode.Single);
+
+        // Ждем завершения загрузки
+        while (!asyncLoad.isDone)
+        {
+            yield return null;
+        }
+
+        // Устанавливаем активную сцену
+        SceneManager.SetActiveScene(SceneManager.GetSceneByName("MainMenu_P"));
+
+        // Обновляем состояние
+        ChangeState(GameState.MainMenu);
+
+
+        Debug.Log($"State changed to: {CurrentState}");
         Debug.Log("MainMenu loaded after splash screen");
+    }
+
+    public void ChangeState(GameState newState)
+    {
+        if (CurrentState == newState) return;
+
+        GameState previousState = CurrentState;
+        CurrentState = newState;
+
+        // Уведомляем подписчиков
+        OnGameStateChanged?.Invoke(previousState, newState);
+        Debug.Log($"State changed from {previousState} to {newState}");
     }
 
     #region State Management
@@ -146,12 +175,14 @@ public class GameManager : MonoBehaviour
                 GameState.InGameMenuAutoPaused;
 
             Time.timeScale = 0f;
+            Debug.Log($"State changed to: {CurrentState}");
             OnGamePaused?.Invoke();
         }
         else
         {
             CurrentState = GameState.Gameplay;
             Time.timeScale = 1f;
+            Debug.Log($"State changed to: {CurrentState}");
             OnGameResumed?.Invoke();
         }
     }
@@ -382,10 +413,74 @@ public class GameManager : MonoBehaviour
         Debug.Log($"Scene loaded: {sceneName}, State changed to: {CurrentState}");
     }
     #endregion
+
+    public void SaveCurrentGame(string saveName)
+    {
+        if (player == null)
+        {
+            Debug.LogError("Player reference is missing!");
+            return;
+        }
+
+        var data = new GameSaveData
+        {
+            levelName = SceneManager.GetActiveScene().name,
+            playerPosition = player.transform.position,
+            timestamp = DateTime.Now
+        };
+        SaveSystem.SaveGame(saveName, data);
+        Debug.Log($"Game saved: {saveName} at {data.timestamp}");
+    }
+
+    public void LoadGame(string saveName)
+    {
+        GameSaveData data = SaveSystem.LoadGame(saveName);
+        if (data == null)
+        {
+            Debug.LogError($"Save file {saveName} not found!");
+            return;
+        }
+        StartCoroutine(LoadGameCoroutine(data));
+    }
+
+    private IEnumerator LoadGameCoroutine(GameSaveData data)
+    {
+        // Создаем операцию загрузки
+        AsyncOperation loadOperation = SceneManager.LoadSceneAsync(data.levelName);
+        loadOperation.allowSceneActivation = false;
+
+        // Ждем загрузки на 90% (оставшиеся 10% - активация)
+        while (loadOperation.progress < 0.9f)
+        {
+            yield return null;
+        }
+
+        // Разрешаем активацию сцены
+        loadOperation.allowSceneActivation = true;
+
+        // Ждем завершения
+        while (!loadOperation.isDone)
+        {
+            yield return null;
+        }
+
+        // Теперь ищем игрока
+        player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null)
+        {
+            Debug.LogError("Player object not found after scene load!");
+            yield break;
+        }
+
+        // Восстанавливаем позицию
+        player.transform.position = data.playerPosition;
+        Debug.Log($"Game loaded: {data.levelName}, player at {data.playerPosition}");
+    }
+
 }
 
 
-
+#region [SaveSystem static class]
 public static class SaveSystem
 {
     private const string SAVE_KEY = "GameSave";
@@ -412,4 +507,74 @@ public static class SaveSystem
         PlayerPrefs.SetString(LEVEL_KEY, levelName);
         PlayerPrefs.Save();
     }
+
+    internal static GameSaveData LoadGame(string saveName)
+    {
+        throw new NotImplementedException();
+    }
+
+    internal static void SaveGame(string saveName, GameSaveData data)
+    {
+        throw new NotImplementedException();
+    }
 }
+#endregion
+
+#region [GameSaveData public serializable class]
+/// <summary>
+/// Данные для сохранения. В будущем будут в отдельном файле
+/// </summary>
+
+// using System;
+// using UnityEngine;
+[Serializable]
+public class GameSaveData
+{
+    public string levelName;      // Имя текущей сцены
+    public Vector3 playerPosition; // Позиция игрока
+    public DateTime timestamp;    // Время сохранения
+
+    /*
+    // Системная информация
+    public string saveVersion = "1.0";
+    public DateTime saveTime;
+    public string saveName;
+
+    // Сцена и прогресс
+    public string currentLevel;
+    public Vector3 playerPosition;
+    public Quaternion playerRotation;
+
+    // Параметры игрока
+    public float health;
+    public float maxHealth;
+    public int experience;
+    public int level;
+
+    // Инвентарь (пример)
+    public string[] inventoryItems;
+    public int[] inventoryCounts;
+
+    // Настройки игры (если нужно)
+    public float musicVolume;
+    public float effectsVolume;
+
+    // Конструктор для быстрого создания
+    public GameSaveData(string name, string level, Vector3 position)
+    {
+        saveName = name;
+        currentLevel = level;
+        playerPosition = position;
+        saveTime = DateTime.Now;
+    }
+
+    // Метод для валидации данных
+    public bool IsValid()
+    {
+        return !string.IsNullOrEmpty(currentLevel)
+            && health > 0
+            && !string.IsNullOrEmpty(saveVersion);
+    }
+    */
+}
+#endregion
