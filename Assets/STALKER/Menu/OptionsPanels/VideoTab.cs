@@ -7,6 +7,9 @@ using static KeybindManager;
 using System.Collections.Generic;
 using System.Linq;
 using System;
+using UnityEditor;
+using UnityEngine.Rendering;
+using System.Reflection;
 
 public class VideoTab : MonoBehaviour
 {
@@ -81,6 +84,9 @@ public class VideoTab : MonoBehaviour
     {
         _resolutions = Screen.resolutions;
 
+        SetDefaultSettings();
+        SaveDefaultSettings();
+
         // Инициализация выпадающих списков
         InitializeDropdowns();
     }
@@ -97,6 +103,10 @@ public class VideoTab : MonoBehaviour
             new TMP_Dropdown.OptionData("DirectX 11"),
             new TMP_Dropdown.OptionData("DirectX 12")
         });
+
+        // Автовыбор текущего API
+        string api = SystemInfo.graphicsDeviceType.ToString();
+        renderDropdown.value = api.Contains("Direct3D12") ? 1 : 0;
 
         // Quality Settings
         qualityDropdown.ClearOptions();
@@ -122,6 +132,7 @@ public class VideoTab : MonoBehaviour
     [System.Serializable]
     private class VideoSettings
     {
+        public int renderType;
         public int qualityLevel;
         public int resolutionIndex;
         public bool isFullscreen;
@@ -133,6 +144,7 @@ public class VideoTab : MonoBehaviour
     public void ApplySettings()
     {
         // Применяем текущие настройки
+        
         QualitySettings.SetQualityLevel(currentSettings.qualityLevel);
         Screen.SetResolution(
             Screen.resolutions[currentSettings.resolutionIndex].width,
@@ -147,14 +159,26 @@ public class VideoTab : MonoBehaviour
 
     public void ResetToDefault()
     {
+        /*
         currentSettings = new VideoSettings
         {
+            renderType = defaultSettings.renderType,
             qualityLevel = defaultSettings.qualityLevel,
             resolutionIndex = defaultSettings.resolutionIndex,
             isFullscreen = defaultSettings.isFullscreen,
             gamma = defaultSettings.gamma,
             contrast = defaultSettings.contrast,
             brightness = defaultSettings.brightness
+        };*/
+        currentSettings = new VideoSettings
+        {
+            renderType = 0,
+            qualityLevel = QualitySettings.GetQualityLevel(),
+            resolutionIndex = GetCurrentResolutionIndex(),
+            isFullscreen = true,
+            gamma = 0.5f,
+            contrast = 0.5f,
+            brightness = 0.5f
         };
 
         UpdateUI();
@@ -168,7 +192,53 @@ public class VideoTab : MonoBehaviour
         File.WriteAllText(savePath, json);
     }
 
-    private void LoadSettings()
+    [Obsolete]
+    private int GetCurrentResolutionIndex()
+    {
+        Resolution current = Screen.currentResolution;
+        for (int i = 0; i < _resolutions.Length; i++)
+        {
+            if (_resolutions[i].width == current.width &&
+                _resolutions[i].height == current.height &&
+                _resolutions[i].refreshRate == current.refreshRate)
+            {
+                return i;
+            }
+        }
+        return 0; // Возвращаем 0, если разрешение не найдено
+    }
+    private void SetDefaultSettings()
+    {
+
+        defaultSettings.renderType = 0;
+        defaultSettings.qualityLevel = QualitySettings.GetQualityLevel();
+        defaultSettings.resolutionIndex = GetCurrentResolutionIndex();
+        defaultSettings.isFullscreen = true;
+        defaultSettings.gamma = 0.5f;
+        defaultSettings.contrast = 0.5f;
+        defaultSettings.brightness = 0.5f;
+    }
+
+    private void SaveDefaultSettings()
+    {
+        currentSettings = new VideoSettings
+        {
+            renderType = defaultSettings.renderType,
+            qualityLevel = defaultSettings.qualityLevel,
+            //resolutionIndex = defaultSettings.resolutionIndex, - у всех свой
+            isFullscreen = defaultSettings.isFullscreen,
+            gamma = defaultSettings.gamma,
+            contrast = defaultSettings.contrast,
+            brightness = defaultSettings.brightness
+        };
+
+        string json = JsonUtility.ToJson(currentSettings, true);
+        File.WriteAllText(defaultSavePath, json);
+        
+        UpdateUI();
+    }
+
+    public void LoadSettings()
     {
         if (File.Exists(savePath))
         {
@@ -179,13 +249,14 @@ public class VideoTab : MonoBehaviour
         {
             currentSettings = new VideoSettings
             {
+                renderType = defaultSettings.renderType,
                 qualityLevel = QualitySettings.GetQualityLevel(),
                 resolutionIndex = Array.FindIndex(Screen.resolutions,
                     r => r.width == Screen.width && r.height == Screen.height),
                 isFullscreen = Screen.fullScreen,
-                gamma = 1.0f,
-                contrast = 1.0f,
-                brightness = 1.0f
+                gamma = 0.5f,
+                contrast = 0.5f,
+                brightness = 0.5f
             };
         }
 
@@ -194,6 +265,7 @@ public class VideoTab : MonoBehaviour
 
     private void UpdateUI()
     {
+        renderDropdown.value = currentSettings.renderType;
         qualityDropdown.value = currentSettings.qualityLevel;
         resolutionDropdown.value = currentSettings.resolutionIndex;
         fullScreenToggle.isOn = currentSettings.isFullscreen;
@@ -206,36 +278,60 @@ public class VideoTab : MonoBehaviour
 
 
 
-
     #region UI Event Handlers
+    public void OnRenderTypeChanged(int index)
+    {
+        currentSettings.renderType = index;
+        Debug.Log("currentSettings.renderType = " + index);
+    }
+
     public void OnQualityChanged(int index)
     {
         currentSettings.qualityLevel = index;
+        Debug.Log("currentSettings.qualityLevel = " + index);
     }
 
     public void OnResolutionChanged(int index)
     {
         currentSettings.resolutionIndex = index;
+        Debug.Log("currentSettings.resolutionIndex = " + index);
     }
 
     public void OnFullscreenChanged(bool value)
     {
         currentSettings.isFullscreen = value;
+        Debug.Log("currentSettings.isFullscreen = " + value);
     }
 
     public void OnGammaChanged(float value)
     {
         currentSettings.gamma = value;
+        Debug.Log("currentSettings.gamma = " + value);
     }
 
     public void OnContrastChanged(float value)
     {
         currentSettings.contrast = value;
+        Debug.Log("currentSettings.contrast = " + value);
     }
 
     public void OnBrightnessChanged(float value)
     {
         currentSettings.brightness = value;
+        Debug.Log("currentSettings.brightness = " + value);
+    }
+    #endregion
+
+    #region [SET DIRECTX11 OR DIECTX12]
+    // Только для Windows Standalone
+    void SetDirectXVersion(bool useDX12)
+    {
+        GraphicsDeviceType[] apis = useDX12 ?
+            new[] { GraphicsDeviceType.Direct3D12 } :
+            new[] { GraphicsDeviceType.Direct3D11 };
+
+        PlayerSettings.SetGraphicsAPIs(BuildTarget.StandaloneWindows, apis);
+        Debug.Log("API changed - requires restart!");
     }
     #endregion
 }
