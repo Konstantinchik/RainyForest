@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-using UnityEngine.Rendering;
+//using UnityEngine.Rendering;
 using static GameManager;
 
 public class UIManager : MonoBehaviour
@@ -91,6 +91,7 @@ public class UIManager : MonoBehaviour
     #region [LoadGameMenu]
     public void ShowLoadGameMenu()
     {
+        GameManager.Instance.MainMenu = false;
         loadGamePanel?.SetActive(true);
     }
 
@@ -103,6 +104,7 @@ public class UIManager : MonoBehaviour
     #region [SaveGameMenu]
     public void ShowSaveGameMenu()
     {
+        GameManager.Instance.MainMenu = false;
         saveGamePanel?.SetActive(true);
     }
 
@@ -127,6 +129,7 @@ public class UIManager : MonoBehaviour
     #region [LeaveGameMenu]
     public void ShowLeaveGameMenu()
     {
+        GameManager.Instance.MainMenu = false;
         leaveGamePanel?.SetActive(true);
     }
 
@@ -139,6 +142,7 @@ public class UIManager : MonoBehaviour
     #region [OptionsMenu]
     public void ShowOptionsMenu()
     {
+        GameManager.Instance.MainMenu = false;
         optionsPanel?.SetActive(true);
     }
 
@@ -151,15 +155,18 @@ public class UIManager : MonoBehaviour
     #region [CreditsMenu]
     public void ShowCreditsMenu()
     {
+        GameManager.Instance.MainMenu = false;
         creditsPanel?.SetActive(true);
     }
 
     public void HideCreditsMenu()
     {
+        GameManager.Instance.MainMenu = true;
         creditsPanel?.SetActive(false);
     }
     #endregion
 
+    /*
     #region [ExitMenu]
     public void ShowExitMenu()
     {
@@ -170,7 +177,8 @@ public class UIManager : MonoBehaviour
     {
         exitPanel?.SetActive(false);
     }
-    #endregion
+    #endregion*/
+
     private void HideAll()
     {
         mainMenuPanel?.SetActive(false);
@@ -186,6 +194,7 @@ public class UIManager : MonoBehaviour
     public void ShowMainMenu()
     {
         HideAll();
+        GameManager.Instance.MainMenu = true;
         mainMenuPanel?.SetActive(true);
     }
 

@@ -9,7 +9,8 @@ using System.Linq;
 using System;
 using UnityEditor;
 using UnityEngine.Rendering;
-using System.Reflection;
+using UnityEngine.Rendering.PostProcessing;
+//using System.Reflection;
 
 public class VideoTab : MonoBehaviour
 {
@@ -23,12 +24,14 @@ public class VideoTab : MonoBehaviour
     [SerializeField] Slider contrastSlider;
     [SerializeField] Slider brightnessSlider;
 
-    [SerializeField] private TMP_Dropdown textureQualityDropdown;
+    [SerializeField] private Button applyButton;
+    [SerializeField] private Button resetButton;
+
+    //[SerializeField] private TMP_Dropdown textureQualityDropdown;
 
     [Header("Settings")]
     [SerializeField] private VideoSettings defaultSettings;
     private VideoSettings currentSettings;
-
     private Resolution[] _resolutions;
 
     #region [SELECT TAB]
@@ -84,14 +87,25 @@ public class VideoTab : MonoBehaviour
     {
         _resolutions = Screen.resolutions;
 
-        SetDefaultSettings();
-        SaveDefaultSettings();
+        //SetDefaultSettings();
+        //SaveDefaultSettings();
+
+        // SetupButtons();
+
+        LoadSettings();
 
         // Инициализация выпадающих списков
         InitializeDropdowns();
     }
 
     #endregion
+
+    // Сейчас 
+    private void SetupButtons()
+    {
+        applyButton.onClick.AddListener(ApplySettings);
+        resetButton.onClick.AddListener(ResetToDefault);
+    }
 
     #region [Dropdown Initialization]
     private void InitializeDropdowns()
@@ -146,15 +160,49 @@ public class VideoTab : MonoBehaviour
         // Применяем текущие настройки
         
         QualitySettings.SetQualityLevel(currentSettings.qualityLevel);
+        // Разрешение экрана
+        var resolution = _resolutions[currentSettings.resolutionIndex];
         Screen.SetResolution(
             Screen.resolutions[currentSettings.resolutionIndex].width,
             Screen.resolutions[currentSettings.resolutionIndex].height,
-            currentSettings.isFullscreen
+            currentSettings.isFullscreen ? FullScreenMode.FullScreenWindow : FullScreenMode.Windowed,
+            Screen.resolutions[currentSettings.resolutionIndex].refreshRateRatio
         );
         // Здесь можно добавить применение gamma, contrast и brightness
+        // Применяем настройки цветокоррекции
+        ApplyColorGradingSettings(
+            currentSettings.gamma,
+            currentSettings.contrast,
+            currentSettings.brightness
+        );
 
         SaveSettings();
         Debug.Log("Video settings applied!");
+    }
+
+    private void ApplyColorGradingSettings(float gamma, float contrast, float brightness)
+    {
+        // Получаем PostProcessVolume из сцены
+        PostProcessVolume volume = FindFirstObjectByType<PostProcessVolume>();
+        if (volume == null)
+        {
+            Debug.LogWarning("PostProcessVolume not found in scene!");
+            return;
+        }
+
+        // Получаем или добавляем компонент ColorGrading
+        if (!volume.profile.TryGetSettings(out ColorGrading colorGrading))
+        {
+            colorGrading = volume.profile.AddSettings<ColorGrading>();
+        }
+
+        // Применяем настройки
+        colorGrading.enabled.Override(true);
+        colorGrading.gamma.Override(new Vector4(1f, 1f, 1f, gamma));
+        colorGrading.contrast.Override(contrast);
+        colorGrading.brightness.Override(brightness);
+
+        Debug.Log($"Applied color settings - Gamma: {gamma}, Contrast: {contrast}, Brightness: {brightness}");
     }
 
     public void ResetToDefault()

@@ -1,14 +1,16 @@
 using UnityEngine;
+using static GameManager;
 
 public class OptionsPanel : MonoBehaviour
 {
     [Header("Панели настроек")]
+    [SerializeField] private GameObject optionsPanel;
     [SerializeField] private GameObject videoTab;
     [SerializeField] private GameObject soundTab;
     [SerializeField] private GameObject gameTab;
     [SerializeField] private GameObject controlTab;
 
-    
+
 
     private void OnEnable()
     {
@@ -50,6 +52,15 @@ public class OptionsPanel : MonoBehaviour
         controlTab.SetActive(false);
     }
     #endregion
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            optionsPanel.SetActive(false);
+            GameManager.Instance.MainMenu = true;
+        }
+    }
 
     private void UpdateButtonStates(GameObject activeButton)
     {

@@ -27,6 +27,9 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private GameObject lastSaveGamePanel;
     [SerializeField] private Button lastSaveGameBackButton;
 
+    [Header("Leave Game References")]
+    [SerializeField] private GameObject leaveGamePanel;
+
     [Header("Options References")]
     [SerializeField] private GameObject optionsPanel;
     [SerializeField] private Button optionsBackButton;
@@ -52,15 +55,15 @@ public class MainMenuController : MonoBehaviour
 
         lastSaveButton.onClick.AddListener(ShowLastSavedGame);
 
-        leaveGameButton.onClick.AddListener(ShowLeaveGame);
+        leaveGameButton.onClick.AddListener(ShowLeaveGame);     // Открывается панель: Покинут игру если PlayMode = GamePlay || GamePause
 
-        optionsButton.onClick.AddListener(ShowOptions);
+        optionsButton.onClick.AddListener(ShowOptions);         // Открываем панель настроек
 
         creditsButton.onClick.AddListener(ShowCredits);
 
-        exitButton.onClick.AddListener(ShowExitConfirm);
-        exitCancelButton.onClick.AddListener(HideExitConfirm);
-        exitConfirmButton.onClick.AddListener(ExitGame);
+        exitButton.onClick.AddListener(ShowExitConfirm);        // Открывается панель подтверждения выхода
+        exitCancelButton.onClick.AddListener(HideExitConfirm);  // Панель подтверждения закрывается
+        exitConfirmButton.onClick.AddListener(ExitGame);        // Закрытие приложения
 
 
         //optionsBackButton.onClick.AddListener(HideOptions);
@@ -127,11 +130,11 @@ public class MainMenuController : MonoBehaviour
     #region [Leave Game UI Panel]
     private void ShowLeaveGame()
     {
-        UIManager.Instance.ShowSaveGameMenu();
+        UIManager.Instance.ShowLeaveGameMenu();
     }
     private void HideLeaveGame()
     {
-        UIManager.Instance.ShowSaveGameMenu();
+        UIManager.Instance.HideLeaveGameMenu();
     }
     #endregion
 
@@ -177,6 +180,7 @@ public class MainMenuController : MonoBehaviour
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else
+        // Здесь нужно проверить ... а может и нет
         Application.Quit();
 #endif
     }

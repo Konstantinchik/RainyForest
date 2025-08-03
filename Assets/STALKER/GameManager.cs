@@ -26,6 +26,8 @@ public class GameManager : MonoBehaviour
         InGameMenuManualPaused  // Меню в игре (ручная пауза)
     }
 
+    public bool MainMenu;       // Если мы переходим в другие меню = false. При нажатии на Esc = true, ShowMainMenu()
+
     private GameObject player;
 
     private GameState _currentState;    // = GameState.Intro; - здесь не срабатывает
@@ -349,15 +351,36 @@ public class GameManager : MonoBehaviour
         {
             switch (CurrentState)
             {
-                case GameState.Gameplay:
+                case GameState.Gameplay:                // Ставим игру на автопаузу и выходим в меню. GameState == InGameMenuAutoPaused
+                    ChangeState(GameState.InGameMenuAutoPaused);
                     SetPaused(true);
                     break;
-                case GameState.InGameMenuAutoPaused:
-                case GameState.InGameMenuManualPaused:
-                    SetPaused(false);
+                case GameState.GamePaused:
+                    ChangeState(GameState.InGameMenuManualPaused);
+                    SetPaused(true);
+                    break;
+                case GameState.InGameMenuAutoPaused:    // Возвращаемся в игру. Снимаем таймер с паузы. GameState == GamePlay
+                    if (MainMenu)
+                    {
+                        SetPaused(false);
+                    }
+                    else
+                    {
+                        UIManager.Instance.ShowMainMenu();
+                    }
+                    break;
+                case GameState.InGameMenuManualPaused:  // Возвращаемся в игру. Панель паузы активена. Таймер на паузе. GameState == GamePaused
+                    if (MainMenu)
+                    {
+                        SetPaused(true);
+                    }
+                    else
+                    {
+                        UIManager.Instance.ShowMainMenu();
+                    }
                     break;
                 case GameState.MainMenu:
-                    // Логика выхода из игры
+                    // Если мы загрузили игру и просто в главном меню, Esc ничего не делает
                     break;
             }
         }
