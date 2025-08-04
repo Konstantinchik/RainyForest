@@ -14,7 +14,8 @@ public class AnimatedCursor : MonoBehaviour
     private int currentFrame;
     private float timer;
 
-    private Vector2 offset = new Vector2(16, -16); // Ñìåùåíèå âïðàâî è âíèç
+    // ÍÀÄÎ ÂÎÏÐÎÑ ÊÎÍÊÐÅÒÍÎ ÏÎÐÅØÀÒÜ
+    private Vector2 offset = new Vector2(28, -30); // Ñìåùåíèå âïðàâî è âíèç
 
     private void Awake()
     {
@@ -32,9 +33,14 @@ public class AnimatedCursor : MonoBehaviour
     void Update()
     {
 
-        transform.position = Input.mousePosition + (Vector3)offset; 
+        transform.position = Input.mousePosition + (Vector3)offset;
 
-        timer += Time.deltaTime;
+        if (cursorFrames == null || cursorFrames.Length == 0)
+            return;
+
+        // Èñïîëüçóåì unscaledDeltaTime, ÷òîáû ðàáîòàëî ïðè Time.timeScale = 0
+        timer += Time.unscaledDeltaTime;
+
         if (timer >= 1f / frameRate)
         {
 

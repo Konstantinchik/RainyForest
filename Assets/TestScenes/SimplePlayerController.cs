@@ -30,6 +30,7 @@ public class SimplePlayerController : MonoBehaviour
         if(Input.GetKey(KeyCode.Escape))
         {
             GameManager.Instance.ShowMainMenuUI();
+            Cursor.lockState = CursorLockMode.Confined;
             GameManager.Instance.ChangeState(GameManager.GameState.InGameMenuAutoPaused);
         }
     }

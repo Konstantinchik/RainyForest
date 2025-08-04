@@ -3,14 +3,13 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using static KeybindManager;
-//using UnityEngine.UIElements;
 using System.Collections.Generic;
 using System.Linq;
 using System;
 using UnityEditor;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.PostProcessing;
-//using System.Reflection;
+
 
 public class VideoTab : MonoBehaviour
 {
@@ -132,7 +131,7 @@ public class VideoTab : MonoBehaviour
             new TMP_Dropdown.OptionData("высокие"),
             new TMP_Dropdown.OptionData("максимальные")
         });
-    
+
         // Resolution Settings
         resolutionDropdown.ClearOptions();
         var resolutionOptions = _resolutions
@@ -158,7 +157,7 @@ public class VideoTab : MonoBehaviour
     public void ApplySettings()
     {
         // Применяем текущие настройки
-        
+
         QualitySettings.SetQualityLevel(currentSettings.qualityLevel);
         // Разрешение экрана
         var resolution = _resolutions[currentSettings.resolutionIndex];
@@ -282,7 +281,7 @@ public class VideoTab : MonoBehaviour
 
         string json = JsonUtility.ToJson(currentSettings, true);
         File.WriteAllText(defaultSavePath, json);
-        
+
         UpdateUI();
     }
 
@@ -374,12 +373,16 @@ public class VideoTab : MonoBehaviour
     // Только для Windows Standalone
     void SetDirectXVersion(bool useDX12)
     {
+#if UNITY_EDITOR
         GraphicsDeviceType[] apis = useDX12 ?
             new[] { GraphicsDeviceType.Direct3D12 } :
             new[] { GraphicsDeviceType.Direct3D11 };
 
         PlayerSettings.SetGraphicsAPIs(BuildTarget.StandaloneWindows, apis);
         Debug.Log("API changed - requires restart!");
+#else
+    Debug.LogWarning("Changing Graphics API at runtime is only supported in the Unity Editor.");
+#endif
     }
     #endregion
 }
