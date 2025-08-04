@@ -69,7 +69,28 @@ public class MainMenuController : MonoBehaviour
         //optionsBackButton.onClick.AddListener(HideOptions);
 
         // Проверяем доступность кнопки продолжения
-        resumeButton.interactable = SaveSystem.HasSave();
+        if (GameManager.Instance.CurrentState == GameManager.GameState.MainMenu)
+            resumeButton.interactable = false;
+
+        // Проверяем доступность кнопки последнее сохранение
+        if (GameManager.Instance.CurrentState == GameManager.GameState.MainMenu)
+            lastSaveButton.interactable = false;
+
+        // Проверяем доступность кнопки покидания игры
+        if (GameManager.Instance.CurrentState == GameManager.GameState.InGameMenuManualPaused ||
+            GameManager.Instance.CurrentState == GameManager.GameState.InGameMenuAutoPaused)
+            leaveGameButton.interactable = SaveSystem.HasSave();
+    }
+
+    private void Start()
+    {
+        // Проверяем доступность кнопки продолжения
+        if (GameManager.Instance.CurrentState == GameManager.GameState.MainMenu)
+            resumeButton.interactable = false;
+
+        // Проверяем доступность кнопки покидания игры
+        if (GameManager.Instance.CurrentState == GameManager.GameState.MainMenu)
+            leaveGameButton.interactable = false;
     }
 
     #region [Start New Game]
@@ -119,7 +140,7 @@ public class MainMenuController : MonoBehaviour
     #region [Last Saved Game UI Panel]
     private void ShowLastSavedGame()
     {
-        UIManager.Instance.ShowSaveGameMenu();
+        //UIManager.Instance.ShowSaveGameMenu();
     }
     private void HideLastSavedGame()
     {

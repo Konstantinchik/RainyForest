@@ -12,20 +12,15 @@ public class SaveGamePanelController : MonoBehaviour
     [SerializeField] private Button saveButton;
     [SerializeField] private Button deleteButton;
     [SerializeField] private Button cancelButton;
-    //[SerializeField] private GameObject confirmOverridePanel;
+    [SerializeField] private GameObject confirmOverridePanel;
     [SerializeField] private Transform saveScrollContent;
     [SerializeField] private GameObject saveGameItemPrefab;
-
-    private ConfirmOverridePanel confirmOverridePanel; // Изменяем тип ссылки
 
     private string selectedSaveName;
     private List<GameObject> saveItems = new List<GameObject>();
 
     private void Awake()
     {
-        // Получаем ссылку на компонент
-        confirmOverridePanel = GetComponentInChildren<ConfirmOverridePanel>(true);
-
         saveButton.onClick.AddListener(OnSaveClicked);
         deleteButton.onClick.AddListener(OnDeleteClicked);
         cancelButton.onClick.AddListener(OnCancelClicked);
@@ -36,9 +31,8 @@ public class SaveGamePanelController : MonoBehaviour
     {
         RefreshSaveList();
         saveGameInputField.text = "";
-        //confirmOverridePanel.SetActive(false);
+        confirmOverridePanel.SetActive(false);
         selectedSaveName = null;
-        UpdateButtons();
     }
 
     private void RefreshSaveList()
@@ -67,13 +61,6 @@ public class SaveGamePanelController : MonoBehaviour
     {
         selectedSaveName = saveName;
         saveGameInputField.text = saveName;
-        UpdateButtons();
-    }
-
-    private void UpdateButtons()
-    {
-        deleteButton.interactable = !string.IsNullOrEmpty(selectedSaveName);
-        saveButton.interactable = !string.IsNullOrEmpty(saveGameInputField.text);
     }
 
     private void OnSaveInputSubmit(string text)
@@ -84,12 +71,12 @@ public class SaveGamePanelController : MonoBehaviour
     private void OnSaveClicked()
     {
         string saveName = saveGameInputField.text;
-        if (string.IsNullOrEmpty(saveName)) return;
+        if (string.IsNullOrEmpty(saveName) && string.IsNullOrEmpty(selectedSaveName)) return;
 
-        if (SaveSystemTest.SaveExists(saveName) && saveName != selectedSaveName)
+        if (SaveSystemTest.SaveExists(saveName) && saveName == selectedSaveName)
         {
             // Показываем панель с callback
-            confirmOverridePanel.Show(ConfirmOverride);
+            confirmOverridePanel.GetComponent<ConfirmOverridePanel>().Show(ConfirmOverride);
         }
         else
         {
@@ -119,7 +106,7 @@ public class SaveGamePanelController : MonoBehaviour
         RefreshSaveList();
         saveGameInputField.text = "";
         selectedSaveName = null;
-        UpdateButtons();
+        Debug.Log($"[Save] Saving game as '{saveName}'");
     }
 
     private void OnDeleteClicked()
@@ -130,7 +117,6 @@ public class SaveGamePanelController : MonoBehaviour
             RefreshSaveList();
             saveGameInputField.text = "";
             selectedSaveName = null;
-            UpdateButtons();
         }
     }
 
