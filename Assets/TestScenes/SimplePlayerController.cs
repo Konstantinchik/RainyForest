@@ -26,5 +26,23 @@ public class SimplePlayerController : MonoBehaviour
 
         Vector3 move = transform.right * h + transform.forward * v;
         controller.SimpleMove(move * moveSpeed);
+
+        if(Input.GetKey(KeyCode.Escape))
+        {
+            GameManager.Instance.ShowMainMenuUI();
+            GameManager.Instance.ChangeState(GameManager.GameState.InGameMenuAutoPaused);
+        }
+    }
+
+    public void SetControlEnabled(bool enabled)
+    {
+        this.enabled = enabled; // отключает Update()
+        if (TryGetComponent<Camera>(out var cam))
+            cam.enabled = enabled;
+
+        // Если камера — дочерний объект
+        var childCamera = GetComponentInChildren<Camera>();
+        if (childCamera != null)
+            childCamera.enabled = enabled;
     }
 }

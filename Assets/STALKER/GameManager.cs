@@ -26,9 +26,9 @@ public class GameManager : MonoBehaviour
         InGameMenuManualPaused  // Меню в игре (ручная пауза)
     }
 
-    public bool MainMenu;       // Если мы переходим в другие меню = false. При нажатии на Esc = true, ShowMainMenu()
+    public GameObject MainMenuRoot { get; private set; }
 
-    private GameObject player;
+    public bool MainMenu;       // Если мы переходим в другие меню = false. При нажатии на Esc = true, ShowMainMenu()
 
     private GameState _currentState;    // = GameState.Intro; - здесь не срабатывает
     private GameState _stateBeforeMenu; // Храним предыдущее состояние перед выходом в меню по Esc
@@ -141,9 +141,40 @@ public class GameManager : MonoBehaviour
         GameState previousState = CurrentState;
         CurrentState = newState;
 
+
+
+        if (newState == GameState.Gameplay)
+        {
+            TryFindPlayer(); // 👈 авто-поиск при переходе в GamePlay
+        }
+
+        // 👇 ВАЖНО: при автопаузе сразу показать главное меню
+        if ((newState == GameState.InGameMenuAutoPaused) ||(newState == GameState.InGameMenuManualPaused))
+        {
+            UIManager.Instance?.ShowMainMenu();
+        }
+
         // Уведомляем подписчиков
         OnGameStateChanged?.Invoke(previousState, newState);
         Debug.Log($"State changed from {previousState} to {newState}");
+    }
+
+    private void TryFindPlayer()
+    {
+        if (_currentPlayer == null)
+        {
+            var playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+            {
+                _currentPlayer = playerObj;
+                NotifyPlayerSpawned(_currentPlayer); // вызывает OnPlayerSpawned
+                Debug.Log($"[GameManager] Player found during GamePlay: {_currentPlayer.name}");
+            }
+            else
+            {
+                Debug.LogWarning("[GameManager] Player not found in scene.");
+            }
+        }
     }
 
     #region State Management
@@ -281,6 +312,15 @@ public class GameManager : MonoBehaviour
         {
             LoadedGameScenes.Add(scene.name);
         }
+
+        if (scene.name == MainMenuSceneName)
+        {
+            // Найдём и сохраним ссылку на корень главного меню
+            MainMenuRoot = GameObject.Find("MainMenuRoot");
+            Debug.LogWarning("[GameManager] MainMenuRoot ДОБАВЛЕН!");
+            if (MainMenuRoot == null)
+                Debug.LogWarning("[GameManager] MainMenuRoot не найден в сцене MainMenu_P!");
+        }
     }
 
     private void OnSceneUnloaded(Scene scene)
@@ -336,10 +376,10 @@ public class GameManager : MonoBehaviour
     private void HandlePlayerSpawned(GameObject player)
     {
         _currentPlayer = player;
-        Debug.Log($"[GameManager] Player spawned: {player.name}");
+        Debug.Log($"[GameManager] Player spawned: {_currentPlayer.name}");
 
         // Инициализация компонентов игрока
-        var stats = player.GetComponent<PlayerStats>();
+        var stats = _currentPlayer.GetComponent<PlayerStats>();
         var cam = player.GetComponentInChildren<Camera>();
     }
     #endregion
@@ -432,14 +472,70 @@ public class GameManager : MonoBehaviour
         SceneManager.SetActiveScene(loadedScene);
         AddGameScene(sceneName);
 
-        CurrentState = GameState.Gameplay;
+        // ✅ Устанавливаем состояние в Gameplay
+        ChangeState(GameState.Gameplay);
+
+        // ✅ Деактивируем MainMenu
+        //GameObject.Find("MainMenuRoot")?.SetActive(false);
+        HideMainMenuUI();
+
         Debug.Log($"Scene loaded: {sceneName}, State changed to: {CurrentState}");
+    }
+    #endregion
+
+    #region [Activate / Deactivete Player]
+    private void DeactivatePlayer()
+    {
+        if (_currentPlayer != null)
+        {
+            _currentPlayer.SetActive(false);
+            Debug.Log("[GameManager] Player deactivated.");
+        }
+    }
+
+    private void ActivatePlayer()
+    {
+        if (_currentPlayer != null)
+        {
+            _currentPlayer.SetActive(true);
+            Debug.Log("[GameManager] Player re-activated.");
+        }
+    }
+
+    #endregion
+
+    #region [Main Menu Visibility]
+
+    /// <summary>
+    /// Активирует корневой объект главного меню (MainMenuRoot)
+    /// </summary>
+    public void ShowMainMenuUI()
+    {
+        if (MainMenuRoot != null)
+            MainMenuRoot.SetActive(true);
+        else
+            Debug.LogWarning("[GameManager] MainMenuRoot ещё не присвоен.");
+
+        DeactivatePlayer();
+    }
+
+    /// <summary>
+    /// Деактивирует корневой объект главного меню (MainMenuRoot)
+    /// </summary>
+    public void HideMainMenuUI()
+    {
+        if (MainMenuRoot != null)
+            MainMenuRoot.SetActive(false);
+        else
+            Debug.LogWarning("[GameManager] MainMenuRoot ещё не присвоен.");
+
+        ActivatePlayer();
     }
     #endregion
 
     public void SaveCurrentGame(string saveName)
     {
-        if (player == null)
+        if (_currentPlayer == null)
         {
             Debug.LogError("Player reference is missing!");
             return;
@@ -448,7 +544,7 @@ public class GameManager : MonoBehaviour
         var data = new GameSaveData
         {
             levelName = SceneManager.GetActiveScene().name,
-            playerPosition = player.transform.position,
+            playerPosition = _currentPlayer.transform.position,
             timestamp = DateTime.Now
         };
         SaveSystem.SaveGame(saveName, data);
@@ -488,15 +584,15 @@ public class GameManager : MonoBehaviour
         }
 
         // Теперь ищем игрока
-        player = GameObject.FindGameObjectWithTag("Player");
-        if (player == null)
+        _currentPlayer = GameObject.FindGameObjectWithTag("Player");
+        if (_currentPlayer == null)
         {
             Debug.LogError("Player object not found after scene load!");
             yield break;
         }
 
         // Восстанавливаем позицию
-        player.transform.position = data.playerPosition;
+        _currentPlayer.transform.position = data.playerPosition;
         Debug.Log($"Game loaded: {data.levelName}, player at {data.playerPosition}");
     }
 

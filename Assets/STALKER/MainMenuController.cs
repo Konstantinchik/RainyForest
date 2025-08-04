@@ -40,7 +40,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private Button exitCancelButton;
 
     [Header("Settings")]
-    [SerializeField] private string firstLevelName = "Level1"; //
+    [SerializeField] private string firstLevelName = "Test1"; //
 
     private void Awake()
     {
