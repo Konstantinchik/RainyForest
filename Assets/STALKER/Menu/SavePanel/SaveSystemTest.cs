@@ -56,4 +56,23 @@ public static class SaveSystemTest
         if (File.Exists(path)) File.Delete(path);
     }
 
+    public static SaveMetaData LoadMetaData(string saveName)
+    {
+        var meta = new SaveMetaData
+        {
+            levelName = "Dark Valley",
+            dateTime = System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+            healthPercent = 72 // Пример: получи это из PlayerHealth
+        };
+
+        return meta;
+    }
+}
+
+[System.Serializable]
+public class SaveMetaData
+{
+    public string levelName;
+    public string dateTime;
+    public int healthPercent;
 }
