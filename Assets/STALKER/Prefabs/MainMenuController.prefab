@@ -2182,7 +2182,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 3546572388901123328}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 557099203695140157}
+        m_TargetAssemblyTypeName: LeaveGamePanel, Assembly-CSharp
+        m_MethodName: CancelLeaveGame
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &495564506892443472
 GameObject:
   m_ObjectHideFlags: 0
@@ -4413,7 +4425,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 5287175299860112996}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 557099203695140157}
+        m_TargetAssemblyTypeName: LeaveGamePanel, Assembly-CSharp
+        m_MethodName: ConfirmLeaveGame
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &890365328237185081
 GameObject:
   m_ObjectHideFlags: 0
@@ -42817,6 +42841,7 @@ GameObject:
   - component: {fileID: 7690323492597780876}
   - component: {fileID: 3230860217697862957}
   - component: {fileID: 3201595665733731323}
+  - component: {fileID: 557099203695140157}
   m_Layer: 5
   m_Name: LeaveGamePanel
   m_TagString: Untagged
@@ -42883,6 +42908,20 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &557099203695140157
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7682805297842673815}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e12bb9dcfab3424a83ed5d1645ecbe7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  confirmLeaveGameButton: {fileID: 2052621590182711090}
+  cancelLeaveGameButton: {fileID: 2694143559730327528}
 --- !u!1 &7703936271048023464
 GameObject:
   m_ObjectHideFlags: 0

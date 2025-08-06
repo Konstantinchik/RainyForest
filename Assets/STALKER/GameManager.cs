@@ -185,7 +185,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    #region Pause State Management
+    #region State Management
     /// <summary>
     /// Переключает состояние паузы
     /// </summary>
@@ -300,6 +300,46 @@ public class GameManager : MonoBehaviour
             Time.timeScale = 0f;
             ChangeState(GameState.GamePaused);
         }
+    }
+
+    /// <summary>
+    /// Покидает текущую игру: выгружает игровые сцены, возвращает в главное меню,
+    /// отключает кнопки "Продолжить" и "Покинуть игру"
+    /// </summary>
+    public void LeaveCurrentGame()
+    {
+        Debug.Log("[GameManager] Leaving current game...");
+
+        HideMainMenuUI();
+
+        // 1. Выгружаем все игровые сцены
+        UnloadAllGameScenes();
+
+        // 2. Деактивируем игрока
+        DeactivatePlayer();
+        _currentPlayer = null;
+
+        // 3. Возвращаемся в главное меню
+        CurrentState = GameState.MainMenu;
+
+        // 4. Отображаем главный UI
+        ShowMainMenuUI();
+        UIManager.Instance?.ShowMainMenu();
+
+        /*
+        // 5. Отключаем кнопки "Продолжить игру" и "Покинуть игру", если такие есть
+        var leavePanel = GameObject.Find("LeaveGamePanel");
+        if (leavePanel != null)
+        {
+            var continueBtn = leavePanel.transform.Find("ContinueButton")?.GetComponent<Button>();
+            var leaveBtn = leavePanel.transform.Find("LeaveButton")?.GetComponent<Button>();
+
+            if (continueBtn != null) continueBtn.interactable = false;
+            if (leaveBtn != null) leaveBtn.interactable = false;
+        }
+        */
+
+        Debug.Log("[GameManager] Game exited to Main Menu.");
     }
     #endregion
 
