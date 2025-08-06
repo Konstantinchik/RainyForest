@@ -8,6 +8,12 @@ public class SimplePlayerController : MonoBehaviour
 
     private CharacterController controller;
 
+    private void OnEnable()
+    {
+        Time.timeScale = 1f;
+        
+    }
+
     void Start()
     {
         controller = GetComponent<CharacterController>();
@@ -33,6 +39,8 @@ public class SimplePlayerController : MonoBehaviour
             Cursor.lockState = CursorLockMode.Confined;
             GameManager.Instance.ChangeState(GameManager.GameState.InGameMenuAutoPaused);
         }
+
+        TogglePause();
     }
 
     public void SetControlEnabled(bool enabled)
@@ -45,5 +53,23 @@ public class SimplePlayerController : MonoBehaviour
         var childCamera = GetComponentInChildren<Camera>();
         if (childCamera != null)
             childCamera.enabled = enabled;
+    }
+
+    public void TogglePause()
+    {
+        if (Input.GetKey(KeyCode.Pause))
+        {
+            if(GameManager.Instance.CurrentState == GameManager.GameState.GamePaused)
+            {
+                //Cursor.lockState = CursorLockMode.Confined;
+                GameManager.Instance.ChangeState(GameManager.GameState.Gameplay);
+                UITestLevel.Instance.ShowPauseUI();
+            }
+            else
+            {
+                GameManager.Instance.ChangeState(GameManager.GameState.GamePaused);
+                UITestLevel.Instance.HidePauseUI();
+            }
+        }
     }
 }

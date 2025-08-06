@@ -9,8 +9,6 @@ public class UIManager : MonoBehaviour
 
     [Header("UI Panels")]
     [SerializeField] private GameObject mainMenuPanel;
-    [SerializeField] private GameObject pauseMenuPanel;
-    [SerializeField] private GameObject hudPanel;
     [SerializeField] private GameObject loadGamePanel;
     [SerializeField] private GameObject saveGamePanel;
     [SerializeField] private GameObject lastSavedGamePanel;
@@ -18,6 +16,9 @@ public class UIManager : MonoBehaviour
     [SerializeField] private GameObject optionsPanel;
     [SerializeField] private GameObject creditsPanel;
     [SerializeField] private GameObject exitPanel;
+
+    [Header("Misc UI Panels")]
+    [SerializeField] private GameObject confirmLostUnsavedGamePanel;
 
     #region [Awake singleton]
     private void Awake()
@@ -74,16 +75,16 @@ public class UIManager : MonoBehaviour
                 mainMenuPanel?.SetActive(true);
                 break;
 
-            case GameState.Gameplay:
-                HideAll();
-                hudPanel?.SetActive(true);
-                break;
+            //case GameState.Gameplay:  - обрабатывается в UITestLevel
+            //    HideAll();
+            //    hudPanel?.SetActive(true);
+            //    break;
 
-            case GameState.GamePaused:
+            //case GameState.GamePaused:   - обрабатывается в UITestLevel
             case GameState.InGameMenuAutoPaused:
             case GameState.InGameMenuManualPaused:
-                if (hudPanel != null) hudPanel?.SetActive(true);
-                pauseMenuPanel?.SetActive(true);
+                HideAll();
+                mainMenuPanel?.SetActive(true);
                 break;
         }
     }
@@ -166,7 +167,8 @@ public class UIManager : MonoBehaviour
     }
     #endregion
 
-    /*
+
+    
     #region [ExitMenu]
     public void ShowExitMenu()
     {
@@ -177,18 +179,31 @@ public class UIManager : MonoBehaviour
     {
         exitPanel?.SetActive(false);
     }
-    #endregion*/
+    #endregion
+
+    #region [Confirm Loast Unsaved Data and Start New Game]
+    public void ShowConfirmLostUnsavedGameMenu()
+    {
+        GameManager.Instance.MainMenu = false;
+        confirmLostUnsavedGamePanel?.SetActive(true);
+    }
+
+    public void HideConfirmLostUnsavedGameMenu()
+    {
+        GameManager.Instance.MainMenu = true;
+        confirmLostUnsavedGamePanel?.SetActive(false);
+    }
+    #endregion
 
     private void HideAll()
     {
         mainMenuPanel?.SetActive(false);
-        pauseMenuPanel?.SetActive(false);
-        hudPanel?.SetActive(false);
         loadGamePanel?.SetActive(false);
         saveGamePanel?.SetActive(false);
         lastSavedGamePanel?.SetActive(false);
         optionsPanel?.SetActive(false);
         creditsPanel?.SetActive(false);
+        exitPanel?.SetActive(false);
     }
 
     public void ShowMainMenu()
@@ -196,28 +211,5 @@ public class UIManager : MonoBehaviour
         HideAll();
         GameManager.Instance.MainMenu = true;
         mainMenuPanel?.SetActive(true);
-    }
-
-    
-    internal void ShowPauseMenu(GameState pauseType)
-    {
-        HideAll();
-        hudPanel?.SetActive(true);
-
-        switch (pauseType)
-        {
-            case GameManager.GameState.InGameMenuAutoPaused:
-                hudPanel?.SetActive(true);
-                break;
-
-            case GameManager.GameState.InGameMenuManualPaused:
-                pauseMenuPanel?.SetActive(true);
-                break;
-        }
-    }
-    
-    internal void HideAllPauseMenus()
-    {
-        hudPanel?.SetActive(true);
     }
 }

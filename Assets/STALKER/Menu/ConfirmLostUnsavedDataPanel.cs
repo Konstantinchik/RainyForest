@@ -15,6 +15,8 @@ public class ConfirmLostUnsavedDataPanel : MonoBehaviour
     {
         callback?.Invoke(true);
         gameObject.SetActive(false);
+
+        GameManager.Instance.LoadGameScene(GameManager.Instance.GetFirstGameSceneName);
     }
 
     public void OnCancel()

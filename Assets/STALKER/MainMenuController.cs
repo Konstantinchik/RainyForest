@@ -15,32 +15,12 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private Button creditsButton;
     [SerializeField] private Button exitButton;
 
-    [Header("Load Game References")]
-    [SerializeField] private GameObject loadGamePanel;
-    [SerializeField] private Button loadGameBackButton;
+    [Header("Exit Menu References")]
+    [SerializeField] private Button confirmExitButton;
+    [SerializeField] private Button cancelExitButton;
 
-    [Header("Save Game References")]
-    [SerializeField] private GameObject saveGamePanel;
-    [SerializeField] private Button saveGameBackButton;
-
-    [Header("Last Save Game References")]
-    [SerializeField] private GameObject lastSaveGamePanel;
-    [SerializeField] private Button lastSaveGameBackButton;
-
-    [Header("Leave Game References")]
-    [SerializeField] private GameObject leaveGamePanel;
-
-    [Header("Options References")]
-    [SerializeField] private GameObject optionsPanel;
-    [SerializeField] private Button optionsBackButton;
-
-    [Header("Exit Confirmation")]
-    [SerializeField] private GameObject exitConfirmPanel;
-    [SerializeField] private Button exitConfirmButton;
-    [SerializeField] private Button exitCancelButton;
-
-    [Header("Settings")]
-    [SerializeField] private string firstLevelName = "Test1"; //
+    [Header("Settings firstLevelName")]
+    [SerializeField] private string firstLevelName; // = "Test1"; // берем из GameManager
 
     private void Awake()
     {
@@ -62,41 +42,48 @@ public class MainMenuController : MonoBehaviour
         creditsButton.onClick.AddListener(ShowCredits);
 
         exitButton.onClick.AddListener(ShowExitConfirm);        // Открывается панель подтверждения выхода
-        exitCancelButton.onClick.AddListener(HideExitConfirm);  // Панель подтверждения закрывается
-        exitConfirmButton.onClick.AddListener(ExitGame);        // Закрытие приложения
-
+        cancelExitButton.onClick.AddListener(HideExitConfirm);  // Панель подтверждения закрывается
+        confirmExitButton.onClick.AddListener(ExitGame);        // Закрытие приложения
 
         //optionsBackButton.onClick.AddListener(HideOptions);
-
-        // Проверяем доступность кнопки продолжения
-        if (GameManager.Instance.CurrentState == GameManager.GameState.MainMenu)
-            resumeButton.interactable = false;
-
-        // Проверяем доступность кнопки последнее сохранение
-        if (GameManager.Instance.CurrentState == GameManager.GameState.MainMenu)
-            lastSaveButton.interactable = false;
-
-        // Проверяем доступность кнопки покидания игры
-        if (GameManager.Instance.CurrentState == GameManager.GameState.InGameMenuManualPaused ||
-            GameManager.Instance.CurrentState == GameManager.GameState.InGameMenuAutoPaused)
-            leaveGameButton.interactable = SaveSystem.HasSave();
     }
 
-    private void Start()
+    private void OnEnable()
     {
+        Debug.LogError("MainMenu Enabled");
+
         // Проверяем доступность кнопки продолжения
         if (GameManager.Instance.CurrentState == GameManager.GameState.MainMenu)
             resumeButton.interactable = false;
+        else
+            resumeButton.interactable = true;
 
         // Проверяем доступность кнопки покидания игры
         if (GameManager.Instance.CurrentState == GameManager.GameState.MainMenu)
             leaveGameButton.interactable = false;
+        else
+            leaveGameButton.interactable = true;
+    }
+
+    private void OnDisable()
+    {
+        Debug.LogError("MainMenu Disabled");
+    }
+
+    private void Start()
+    {
+        firstLevelName = GameManager.Instance.GetFirstGameSceneName;
     }
 
     #region [Start New Game]
     private void StartNewGame()
     {
-        SaveSystem.CreateNewSave();
+        // Если игра уже в процессе, надо спросить согласны ли вы потерять несохраненные данные
+        if(GameManager.Instance.CurrentState != GameManager.GameState.MainMenu)
+        {
+            UIManager.Instance.ShowConfirmLostUnsavedGameMenu();
+        }
+        else
         // Загружаем сцену через GameManager
         GameManager.Instance.LoadGameScene(firstLevelName);
     }
@@ -106,12 +93,7 @@ public class MainMenuController : MonoBehaviour
     #region [Resume Game]
     private void ResumeGame()
     {
-        if (SaveSystem.HasSave())
-        {
-            string lastLevel = SaveSystem.GetLastLevel();
-            // Загружаем последний уровень или первый, если сохранение не содержит уровня
-            GameManager.Instance.LoadGameScene(!string.IsNullOrEmpty(lastLevel) ? lastLevel : firstLevelName);
-        }
+        GameManager.Instance.ReturnToGame();
     }
     #endregion
 
@@ -186,12 +168,12 @@ public class MainMenuController : MonoBehaviour
     #region [Exit Confirm UI Panel]
     private void ShowExitConfirm()
     {
-        exitConfirmPanel.SetActive(true);
+        UIManager.Instance.ShowExitMenu();
     }
 
     private void HideExitConfirm()
     {
-        exitConfirmPanel.SetActive(false);
+        UIManager.Instance.HideExitMenu();
     }
     #endregion
 

@@ -5,6 +5,44 @@ using UnityEngine;
 
 public static class SaveSystemTest
 {
+    private const string SAVE_KEY = "GameSave";
+    private const string LEVEL_KEY = "LastLevel";
+
+    public static bool HasSave()
+    {
+        return PlayerPrefs.HasKey(SAVE_KEY);
+    }
+
+    public static void CreateNewSave()
+    {
+        PlayerPrefs.SetInt(SAVE_KEY, 1);
+        PlayerPrefs.Save();
+    }
+
+    public static string GetLastLevel()
+    {
+        return PlayerPrefs.GetString(LEVEL_KEY, "");
+    }
+
+    public static void SaveLevel(string levelName)
+    {
+        PlayerPrefs.SetString(LEVEL_KEY, levelName);
+        PlayerPrefs.Save();
+    }
+
+    internal static GameSaveData LoadGame(string saveName)
+    {
+        throw new NotImplementedException();
+    }
+
+    internal static void SaveGame(string saveName, GameSaveData data)
+    {
+        throw new NotImplementedException();
+    }
+
+    /// <summary>
+    /// Новый раздел
+    /// </summary>
     public static string SaveDirectory
     {
         get
@@ -76,3 +114,17 @@ public class SaveMetaData
     public string dateTime;
     public int healthPercent;
 }
+
+#region [GameSaveData public serializable class]
+/// <summary>
+/// Данные для сохранения. В будущем будут в отдельном файле
+/// </summary>
+
+[Serializable]
+public class GameSaveData
+{
+    public string levelName;      // Имя текущей сцены
+    public Vector3 playerPosition; // Позиция игрока
+    public DateTime timestamp;    // Время сохранения
+}
+#endregion

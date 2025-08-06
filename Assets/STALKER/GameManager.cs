@@ -61,9 +61,12 @@ public class GameManager : MonoBehaviour
 
     #region Scene Management
     private const string MainMenuSceneName = "MainMenu_P";
+    private const string FirstGameSceneName = "Test1";
     public List<string> LoadedGameScenes { get; private set; } = new List<string>();
     private GameObject _currentPlayer;
     #endregion
+
+    public string GetFirstGameSceneName { get {  return FirstGameSceneName; } }
 
     #region Unity Callbacks
     private void Awake()
@@ -109,6 +112,7 @@ public class GameManager : MonoBehaviour
     }
     #endregion
 
+    #region [Load Main Menu after Intro]
     private IEnumerator LoadMainMenuWithDelay()
     {
         // Ждем 3 секунды для показа заставки
@@ -133,7 +137,10 @@ public class GameManager : MonoBehaviour
         Debug.Log($"State changed to: {CurrentState}");
         Debug.Log("MainMenu loaded after splash screen");
     }
+    #endregion
 
+
+    #region [Change Game State]
     public void ChangeState(GameState newState)
     {
         if (CurrentState == newState) return;
@@ -158,6 +165,7 @@ public class GameManager : MonoBehaviour
         OnGameStateChanged?.Invoke(previousState, newState);
         Debug.Log($"State changed from {previousState} to {newState}");
     }
+    #endregion
 
     private void TryFindPlayer()
     {
@@ -177,7 +185,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    #region State Management
+    #region Pause State Management
     /// <summary>
     /// Переключает состояние паузы
     /// </summary>
@@ -278,19 +286,19 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public void ReturnToGame()
     {
+        HideMainMenuUI();
+        Cursor.lockState = CursorLockMode.Locked;
+
         // Возвращаемся в предыдущее состояние
-        if (_stateBeforeMenu == GameState.InGameMenuAutoPaused ||
-            _stateBeforeMenu == GameState.InGameMenuManualPaused)
+        if (_stateBeforeMenu == GameState.InGameMenuAutoPaused)
         {
-            CurrentState = _stateBeforeMenu;
-            UIManager.Instance?.ShowPauseMenu(_stateBeforeMenu);
-        }
-        else
-        {
-            // Если не было паузы, возвращаемся в обычный геймплей
-            CurrentState = GameState.Gameplay;
             Time.timeScale = 1f;
-            UIManager.Instance?.HideAllPauseMenus();
+            ChangeState(GameState.Gameplay);
+        }
+        if(_stateBeforeMenu == GameState.InGameMenuManualPaused)
+        {
+            Time.timeScale = 0f;
+            ChangeState(GameState.GamePaused);
         }
     }
     #endregion
@@ -476,7 +484,6 @@ public class GameManager : MonoBehaviour
         ChangeState(GameState.Gameplay);
 
         // ✅ Деактивируем MainMenu
-        //GameObject.Find("MainMenuRoot")?.SetActive(false);
         HideMainMenuUI();
 
         Debug.Log($"Scene loaded: {sceneName}, State changed to: {CurrentState}");
@@ -547,13 +554,13 @@ public class GameManager : MonoBehaviour
             playerPosition = _currentPlayer.transform.position,
             timestamp = DateTime.Now
         };
-        SaveSystem.SaveGame(saveName, data);
+        SaveSystemTest.SaveGame(saveName, data);
         Debug.Log($"Game saved: {saveName} at {data.timestamp}");
     }
 
     public void LoadGame(string saveName)
     {
-        GameSaveData data = SaveSystem.LoadGame(saveName);
+        GameSaveData data = SaveSystemTest.LoadGame(saveName);
         if (data == null)
         {
             Debug.LogError($"Save file {saveName} not found!");
@@ -598,52 +605,12 @@ public class GameManager : MonoBehaviour
 
 }
 
-
-#region [SaveSystem static class]
-public static class SaveSystem
-{
-    private const string SAVE_KEY = "GameSave";
-    private const string LEVEL_KEY = "LastLevel";
-
-    public static bool HasSave()
-    {
-        return PlayerPrefs.HasKey(SAVE_KEY);
-    }
-
-    public static void CreateNewSave()
-    {
-        PlayerPrefs.SetInt(SAVE_KEY, 1);
-        PlayerPrefs.Save();
-    }
-
-    public static string GetLastLevel()
-    {
-        return PlayerPrefs.GetString(LEVEL_KEY, "");
-    }
-
-    public static void SaveLevel(string levelName)
-    {
-        PlayerPrefs.SetString(LEVEL_KEY, levelName);
-        PlayerPrefs.Save();
-    }
-
-    internal static GameSaveData LoadGame(string saveName)
-    {
-        throw new NotImplementedException();
-    }
-
-    internal static void SaveGame(string saveName, GameSaveData data)
-    {
-        throw new NotImplementedException();
-    }
-}
-#endregion
-
-#region [GameSaveData public serializable class]
+#region [GameSaveData public serializable class -- OLD]
 /// <summary>
 /// Данные для сохранения. В будущем будут в отдельном файле
 /// </summary>
 
+/*
 // using System;
 // using UnityEngine;
 [Serializable]
@@ -694,6 +661,6 @@ public class GameSaveData
             && health > 0
             && !string.IsNullOrEmpty(saveVersion);
     }
-    */
-}
+    
+}*/
 #endregion
