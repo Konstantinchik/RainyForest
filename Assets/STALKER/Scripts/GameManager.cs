@@ -294,11 +294,13 @@ public class GameManager : MonoBehaviour
         {
             Time.timeScale = 1f;
             ChangeState(GameState.Gameplay);
+            Debug.LogError("Вернулись в игру Gameplay");
         }
         if(_stateBeforeMenu == GameState.InGameMenuManualPaused)
         {
             Time.timeScale = 0f;
             ChangeState(GameState.GamePaused);
+            Debug.LogError("Вернулись в игру GamePaused");
         }
     }
 

@@ -1,4 +1,4 @@
-using UnityEngine;
+п»їusing UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
 public class SimplePlayerController : MonoBehaviour
@@ -22,11 +22,11 @@ public class SimplePlayerController : MonoBehaviour
 
     void Update()
     {
-        // Поворот только по оси Y (влево/вправо)
+        // РџРѕРІРѕСЂРѕС‚ С‚РѕР»СЊРєРѕ РїРѕ РѕСЃРё Y (РІР»РµРІРѕ/РІРїСЂР°РІРѕ)
         float rotate = Input.GetAxis("Mouse X") * rotationSpeed * Time.deltaTime;
         transform.Rotate(0f, rotate, 0f);
 
-        // Движение вперёд/назад/влево/вправо в локальных координатах
+        // Р”РІРёР¶РµРЅРёРµ РІРїРµСЂС‘Рґ/РЅР°Р·Р°Рґ/РІР»РµРІРѕ/РІРїСЂР°РІРѕ РІ Р»РѕРєР°Р»СЊРЅС‹С… РєРѕРѕСЂРґРёРЅР°С‚Р°С…
         float h = Input.GetAxis("Horizontal"); // A/D
         float v = Input.GetAxis("Vertical");   // W/S
 
@@ -45,11 +45,11 @@ public class SimplePlayerController : MonoBehaviour
 
     public void SetControlEnabled(bool enabled)
     {
-        this.enabled = enabled; // отключает Update()
+        this.enabled = enabled; // РѕС‚РєР»СЋС‡Р°РµС‚ Update()
         if (TryGetComponent<Camera>(out var cam))
             cam.enabled = enabled;
 
-        // Если камера — дочерний объект
+        // Р•СЃР»Рё РєР°РјРµСЂР° вЂ” РґРѕС‡РµСЂРЅРёР№ РѕР±СЉРµРєС‚
         var childCamera = GetComponentInChildren<Camera>();
         if (childCamera != null)
             childCamera.enabled = enabled;
@@ -57,18 +57,22 @@ public class SimplePlayerController : MonoBehaviour
 
     public void TogglePause()
     {
-        if (Input.GetKey(KeyCode.Pause))
+        if (Input.GetKeyDown(KeyCode.Pause))
         {
             if(GameManager.Instance.CurrentState == GameManager.GameState.GamePaused)
             {
                 //Cursor.lockState = CursorLockMode.Confined;
+                Time.timeScale = 1f;
                 GameManager.Instance.ChangeState(GameManager.GameState.Gameplay);
-                UITestLevel.Instance.ShowPauseUI();
+                UITestLevel.Instance.HidePauseUI(); // рџ‘€ РїСЂР°РІРёР»СЊРЅРѕ: РЎРљР Р«Р’РђР•Рњ РїР°СѓР·Сѓ
+                Cursor.lockState = CursorLockMode.Locked;
             }
             else
             {
+                Time.timeScale = 0f;
                 GameManager.Instance.ChangeState(GameManager.GameState.GamePaused);
-                UITestLevel.Instance.HidePauseUI();
+                UITestLevel.Instance.ShowPauseUI(); // рџ‘€ РїСЂР°РІРёР»СЊРЅРѕ: РџРћРљРђР—Р«Р’РђР•Рњ РїР°СѓР·Сѓ
+                Cursor.lockState = CursorLockMode.Confined;
             }
         }
     }
