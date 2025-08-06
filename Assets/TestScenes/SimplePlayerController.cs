@@ -37,7 +37,7 @@ public class SimplePlayerController : MonoBehaviour
         {
             GameManager.Instance.ShowMainMenuUI();
             Cursor.lockState = CursorLockMode.Confined;
-            GameManager.Instance.ChangeState(GameManager.GameState.InGameMenuAutoPaused);
+            //GameManager.Instance.ChangeState(GameManager.GameState.InGameMenuAutoPaused);
         }
 
         TogglePause();
@@ -61,18 +61,17 @@ public class SimplePlayerController : MonoBehaviour
         {
             if(GameManager.Instance.CurrentState == GameManager.GameState.GamePaused)
             {
-                //Cursor.lockState = CursorLockMode.Confined;
                 Time.timeScale = 1f;
                 GameManager.Instance.ChangeState(GameManager.GameState.Gameplay);
                 UITestLevel.Instance.HidePauseUI(); // 👈 правильно: СКРЫВАЕМ паузу
-                Cursor.lockState = CursorLockMode.Locked;
+                //Cursor.lockState = CursorLockMode.Locked;
             }
             else
             {
                 Time.timeScale = 0f;
                 GameManager.Instance.ChangeState(GameManager.GameState.GamePaused);
                 UITestLevel.Instance.ShowPauseUI(); // 👈 правильно: ПОКАЗЫВАЕМ паузу
-                Cursor.lockState = CursorLockMode.Confined;
+                //Cursor.lockState = CursorLockMode.Confined;
             }
         }
     }

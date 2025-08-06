@@ -211,9 +211,15 @@ public class GameManager : MonoBehaviour
 
         if (paused)
         {
-            CurrentState = CurrentState == GameState.GamePaused ?
-                GameState.InGameMenuManualPaused :
-                GameState.InGameMenuAutoPaused;
+            // ✅ Не трогаем CurrentState напрямую, используем ChangeState
+            if (CurrentState == GameState.GamePaused || CurrentState == GameState.InGameMenuManualPaused)
+            {
+                ChangeState(GameState.InGameMenuManualPaused);
+            }
+            else
+            {
+                ChangeState(GameState.InGameMenuAutoPaused);
+            }
 
             Time.timeScale = 0f;
             Debug.Log($"State changed to: {CurrentState}");
@@ -300,6 +306,7 @@ public class GameManager : MonoBehaviour
         {
             Time.timeScale = 0f;
             ChangeState(GameState.GamePaused);
+            UITestLevel.Instance?.ShowPauseUI(); // 👈 это важно!
             Debug.LogError("Вернулись в игру GamePaused");
         }
     }
