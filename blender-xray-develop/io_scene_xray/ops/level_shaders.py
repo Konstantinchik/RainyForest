@@ -1,0 +1,1089 @@
+# standart modules
+import os
+
+# blender modules
+import bpy
+import mathutils
+
+# addon modules
+from .. import formats
+from .. import rw
+from .. import utils
+
+
+def _get_visuals_meshes(parent_obj, meshes, children):
+    child_objs = children.get(parent_obj)
+
+    if not child_objs:
+        return
+
+    for child_obj in child_objs:
+        if child_obj.xray.level.object_type == 'VISUAL':
+
+            if child_obj.xray.level.visual_type in ('HIERRARHY', 'LOD'):
+                _get_visuals_meshes(child_obj, meshes, children)
+
+            else:
+                if child_obj.type == 'MESH':
+                    meshes.add(child_obj.data)
+
+
+def _get_level_meshes(level_obj, meshes, children):
+    # get sectors object
+    sectors_obj = None
+    sectors_obj_name = level_obj.xray.level.sectors_obj
+
+    if sectors_obj_name:
+        sectors_obj = bpy.data.objects.get(sectors_obj_name)
+
+    if not sectors_obj:
+        for level_child in children[level_obj]:
+
+            if level_child.name.startswith('sectors'):
+                sectors_obj = level_child
+                break
+
+    # collect meshes
+    if sectors_obj:
+        for sector_obj in children[sectors_obj]:
+            _get_visuals_meshes(sector_obj, meshes, children)
+
+
+def _get_children(mode):
+    children = {}
+
+    if mode in ('ACTIVE_LEVEL', 'SELECTED_LEVELS', 'ALL_LEVELS'):
+        for obj in bpy.data.objects:
+
+            if obj.parent:
+                children.setdefault(obj.parent, []).append(obj)
+
+    return children
+
+
+def _get_materials(mode):
+    mats = set()
+    meshes = set()
+    children = _get_children(mode)
+
+    # active level
+    if mode == 'ACTIVE_LEVEL':
+        obj = bpy.context.active_object
+        if obj:
+            if obj.xray.level.object_type == 'LEVEL':
+                _get_level_meshes(obj, meshes, children)
+
+    # selected levels
+    elif mode == 'SELECTED_LEVELS':
+        for obj in bpy.context.selected_objects:
+            if obj.xray.level.object_type == 'LEVEL':
+                _get_level_meshes(obj, meshes, children)
+
+    # all levels
+    elif mode == 'ALL_LEVELS':
+        for obj in bpy.data.objects:
+            if obj.xray.level.object_type == 'LEVEL':
+                _get_level_meshes(obj, meshes, children)
+
+    # active object
+    elif mode == 'ACTIVE_OBJECT':
+        obj = bpy.context.active_object
+        if obj:
+            if obj.type == 'MESH':
+                meshes.add(obj.data)
+
+    # selected objects
+    elif mode == 'SELECTED_OBJECTS':
+        for obj in bpy.context.selected_objects:
+            if obj.type == 'MESH':
+                meshes.add(obj.data)
+
+    # all objects
+    elif mode == 'ALL_OBJECTS':
+        for obj in bpy.data.objects:
+            if obj.type == 'MESH':
+                meshes.add(obj.data)
+
+    # active material
+    elif mode == 'ACTIVE_MATERIAL':
+        obj = bpy.context.active_object
+        if obj:
+            if obj.type == 'MESH':
+                mat = obj.active_material
+                if mat:
+                    mats.add(mat)
+
+    # all materials
+    elif mode == 'ALL_MATERIALS':
+        for mat in bpy.data.materials:
+            mats.add(mat)
+
+    if meshes:
+        for mesh in meshes:
+            for mat in mesh.materials:
+                if mat:
+                    mats.add(mat)
+
+    return mats
+
+
+def _get_diffuse_img(mat):
+    # get output node
+    output_node = None
+
+    if mat.node_tree:
+        for node in mat.node_tree.nodes:
+            if node.bl_idname == 'ShaderNodeOutputMaterial':
+                if node.is_active_output:
+                    output_node = node
+                    break
+
+    # get diffuse image from output node
+    diffuse_img = None
+
+    if output_node:
+        surface_input = output_node.inputs['Surface']
+
+        if surface_input.links:
+            surface = surface_input.links[0].from_node
+
+            # get image from image node
+            if surface.bl_idname == 'ShaderNodeTexImage':
+                img = surface.image
+                if img:
+                    diffuse_img = img
+
+            # get image from shader node
+            if not diffuse_img:
+                color_input = surface.inputs.get('Color')
+
+                if not color_input:
+                    color_input = surface.inputs.get('Base Color')
+
+                if color_input:
+                    if color_input.links:
+                        color = color_input.links[0].from_node
+                        if color.bl_idname == 'ShaderNodeTexImage':
+                            img = color.image
+                            if img:
+                                diffuse_img = img
+
+    # get light map images
+    lmap_imgs = set()
+    for lmap in (mat.xray.lmap_0, mat.xray.lmap_1):
+        if lmap:
+            lmap_img = bpy.data.images.get(lmap)
+            if lmap_img:
+                lmap_imgs.add(lmap_img)
+
+    # get diffuse image from node tree
+    if not diffuse_img:
+        active_img = None
+        all_img_nodes = set()
+
+        if mat.node_tree:
+            for node in mat.node_tree.nodes:
+                if node.bl_idname == 'ShaderNodeTexImage':
+                    img = node.image
+                    if img:
+                        if img in lmap_imgs:
+                            continue
+                        all_img_nodes.add(node)
+                        if node == mat.node_tree.nodes.active:
+                            active_img = img
+
+        if active_img:
+            diffuse_img = active_img
+
+        elif len(all_img_nodes) == 1:
+            diffuse_img = list(all_img_nodes)[0].image
+
+        else:
+            selected_imgs = []
+
+            for img_node in all_img_nodes:
+                if img_node.select:
+                    selected_imgs.append(img_node.image)
+
+            if len(selected_imgs) == 1:
+                diffuse_img = selected_imgs[0]
+            else:
+                diffuse_imgs = []
+                for img_node in all_img_nodes:
+                    if '_bump' in img_node.image.filepath:
+                        continue
+                    diffuse_imgs.append(img_node.image)
+
+                if len(diffuse_imgs) == 1:
+                    diffuse_img = diffuse_imgs[0]
+
+    return diffuse_img
+
+
+def _get_bump_imgs(diff_img):
+    bump_1, bump_2 = None, None
+
+    file_path = bpy.path.abspath(os.path.splitext(diff_img.filepath)[0])
+
+    thm_path = file_path + os.extsep + 'thm'
+    if os.path.exists(thm_path):
+        thm_data = rw.utils.read_file(thm_path)
+        bump_1, bump_2 = formats.thm.read.get_bump_paths(thm_data)
+
+    return bump_1, bump_2
+
+
+def _create_image_nodes(mat, diff_img, bump_1, bump_2, xray):
+    # create image node
+    img_node = mat.node_tree.nodes.new('ShaderNodeTexImage')
+    img_node.image = diff_img
+    img_node.select = False
+    img_node.location.x = -200
+    img_node.location.y = 500
+
+    # create diffuse uv-map node
+    uv_tex_node = None
+    if xray.uv_texture:
+        uv_tex_node = mat.node_tree.nodes.new('ShaderNodeUVMap')
+        uv_tex_node.uv_map = xray.uv_texture
+        uv_tex_node.select = False
+        uv_tex_node.location.x = img_node.location.x - 500
+        uv_tex_node.location.y = img_node.location.y - 300
+
+        # link
+        mat.node_tree.links.new(
+            uv_tex_node.outputs['UV'],
+            img_node.inputs['Vector']
+        )
+
+    # create bumps
+    bump_1_node = None
+    bump_2_node = None
+    bump_nodes = []
+
+    for index, bump in enumerate((bump_1, bump_2)):
+
+        if not bump:
+            bump_nodes.append(None)
+            continue
+
+        # create bump node
+        bump_node = mat.node_tree.nodes.new('ShaderNodeTexImage')
+        bump_node.image = bump
+        bump_node.select = False
+        bump_node.location.x = -200
+        bump_node.location.y = -400 - index*300
+        bump_nodes.append(bump_node)
+
+        # link
+        if uv_tex_node:
+            mat.node_tree.links.new(
+                uv_tex_node.outputs['UV'],
+                bump_node.inputs['Vector']
+            )
+
+    return img_node, bump_nodes
+
+
+def _create_lmap_image_nodes(mat, xray, img_node):
+    use_lmap_1 = False
+    use_lmap_2 = False
+    lmap_imgs = []
+
+    if xray.lmap_0 or xray.lmap_1:
+
+        # create light map uv node
+        uv_lmap_node = mat.node_tree.nodes.new('ShaderNodeUVMap')
+        uv_lmap_node.uv_map = xray.uv_light_map
+        uv_lmap_node.select = False
+
+        # create light map image nodes
+        for i, lmap in enumerate((xray.lmap_0, xray.lmap_1)):
+            if lmap:
+                lmap_img = bpy.data.images.get(lmap)
+                if lmap_img:
+                    lmap_node = mat.node_tree.nodes.new('ShaderNodeTexImage')
+                    lmap_node.image = lmap_img
+                    lmap_node.select = False
+                    lmap_node.location.x = img_node.location.x
+                    lmap_node.location.y = img_node.location.y - (i+1) * 300
+                    lmap_imgs.append(lmap_node)
+
+                    # link
+                    mat.node_tree.links.new(
+                        uv_lmap_node.outputs['UV'],
+                        lmap_node.inputs['Vector']
+                    )
+
+        # move uv-map node
+        if len(lmap_imgs) == 1:
+            use_lmap_1 = True
+            loc = lmap_imgs[0].location
+            uv_lmap_node.location.x = loc.x - 250
+            uv_lmap_node.location.y = loc.y - 100
+
+        elif len(lmap_imgs) == 2:
+            use_lmap_1 = True
+            use_lmap_2 = True
+            loc_1 = lmap_imgs[0].location
+            loc_2 = lmap_imgs[1].location
+            uv_lmap_node.location.x = loc_1.x - 250
+            uv_lmap_node.location.y = (loc_1.y + loc_2.y) / 2 - 100
+
+    return lmap_imgs, use_lmap_1, use_lmap_2
+
+
+def _create_vert_color_node(shader_group, col_name, name, loc):
+    if col_name:
+
+        if utils.version.support_vertex_color_node():
+            col_node = shader_group.nodes.new('ShaderNodeVertexColor')
+            col_node.name = name
+            col_node.layer_name = col_name
+            col_node.select = False
+            col_node.location = loc
+
+        else:
+            col_node = shader_group.nodes.new('ShaderNodeAttribute')
+            col_node.name = name
+            col_node.attribute_name = col_name
+            col_node.select = False
+            col_node.location = loc
+
+        return col_node
+
+
+def _create_vert_col_nodes(mat, shader_group):
+    xray = mat.xray
+
+    light_node = _create_vert_color_node(
+        shader_group,
+        xray.light_vert_color,
+        'Light',
+        mathutils.Vector((-800, 300))
+    )
+    sun_node = _create_vert_color_node(
+        shader_group,
+        xray.sun_vert_color,
+        'Sun',
+        mathutils.Vector((-800, 150))
+    )
+    hemi_node = _create_vert_color_node(
+        shader_group,
+        xray.hemi_vert_color,
+        'Hemi',
+        mathutils.Vector((-400, -200))
+    )
+
+    return light_node, sun_node, hemi_node
+
+
+def _create_group_nodes(
+        mat,
+        img_node,
+        shader_groups,
+        use_lmap_1,
+        use_lmap_2,
+        light_format,
+        create_light
+    ):
+
+    # create group node
+    group = mat.node_tree.nodes.new('ShaderNodeGroup')
+    group.select = False
+    group.width = 350
+    group.location.x = img_node.location.x + 500
+    group.location.y = img_node.location.y - 300
+
+    use_light = bool(mat.xray.light_vert_color)
+    use_sun = bool(mat.xray.sun_vert_color)
+    use_hemi = bool(mat.xray.hemi_vert_color)
+
+    usage = (use_lmap_1, use_lmap_2, use_light, use_sun, use_hemi)
+
+    # shader group
+    grp = shader_groups.get(usage)
+
+    if not grp:
+        if use_lmap_1 and use_lmap_2:
+            group_suffix = 'Light Map'
+
+        elif use_lmap_1 and not use_lmap_2:
+            group_suffix = 'Terrain'
+
+        elif use_light and use_sun and use_hemi:
+            group_suffix = 'Vertex Color'
+
+        elif use_hemi and not use_light and not use_sun:
+            group_suffix = 'Multiple Usage'
+
+        else:
+            group_suffix = ''
+
+        if group_suffix:
+            group_suffix = ': ' + group_suffix
+
+        grp = bpy.data.node_groups.new(
+            'Level Shader Group{}'.format(group_suffix),
+            'ShaderNodeTree'
+        )
+        shader_groups[usage] = grp
+
+        group_interface = utils.version.GroupInterface(grp)
+        add_in = group_interface.create_group_input
+        add_out = group_interface.create_group_output
+
+        # create inputs
+        tex_rgb = add_in('NodeSocketColor', 'Texture Color')
+        tex_a = add_in('NodeSocketFloat', 'Texture Alpha')
+
+        lmap_rgb = add_in('NodeSocketColor', 'Light Map 1 Color')
+        lmap_a = add_in('NodeSocketFloat', 'Light Map 1 Alpha')
+
+        lmap_rgb = add_in('NodeSocketColor', 'Light Map 2 Color')
+        lmap_a = add_in('NodeSocketFloat', 'Light Map 2 Alpha')
+
+        bump_1_rgb = add_in('NodeSocketColor', 'Bump 1 Color')
+        bump_1_a = add_in('NodeSocketFloat', 'Bump 1 Alpha')
+
+        bump_2_rgb = add_in('NodeSocketColor', 'Bump 2 Color')
+        bump_2_a = add_in('NodeSocketFloat', 'Bump 2 Alpha')
+
+        if utils.version.IS_29:
+            tex_rgb.hide_value = True
+            tex_a.hide_value = True
+            lmap_rgb.hide_value = True
+            lmap_a.hide_value = True
+            lmap_rgb.hide_value = True
+            lmap_a.hide_value = True
+            bump_1_rgb.hide_value = True
+            bump_1_a.hide_value = True
+            bump_2_rgb.hide_value = True
+            bump_2_a.hide_value = True
+
+        # create outputs
+        add_out('NodeSocketShader', 'Shader')
+
+        # create group nodes
+        input_node = grp.nodes.new('NodeGroupInput')
+        input_node.select = False
+        input_node.location.x = -800
+
+        output_node = grp.nodes.new('NodeGroupOutput')
+        output_node.select = False
+        output_node.location.x = 800
+
+        # create shader node
+        if utils.version.support_principled_shader():
+            shader_node = grp.nodes.new('ShaderNodeBsdfPrincipled')
+            shader_node.inputs[utils.version.SPECULAR].default_value = 0.0
+            color_socket = 'Base Color'
+        else:
+            shader_node = grp.nodes.new('ShaderNodeBsdfDiffuse')
+            color_socket = 'Color'
+        shader_node.select = False
+        shader_node.location.x = 500
+
+        # link shader
+        grp.links.new(
+            shader_node.outputs['BSDF'],
+            output_node.inputs['Shader']
+        )
+        alpha_link = None
+        if utils.version.IS_28:
+            alpha_link = grp.links.new(
+                input_node.outputs['Texture Alpha'],
+                shader_node.inputs['Alpha']
+            )
+
+        if utils.version.IS_33:
+            com_col = 'ShaderNodeCombineColor'
+            sep_col = 'ShaderNodeSeparateColor'
+            col = 'Color'
+            red = 'Red'
+            green = 'Green'
+            blue = 'Blue'
+        else:
+            com_col = 'ShaderNodeCombineRGB'
+            sep_col = 'ShaderNodeSeparateRGB'
+            col = 'Image'
+            red = 'R'
+            green = 'G'
+            blue = 'B'
+
+        # create color mix nodes
+        mix_node = utils.version.get_node('ShaderNodeMix', utils.version.IS_34)
+        factor = utils.version.get_node('Factor', utils.version.IS_34)
+
+        if utils.version.IS_34:
+            res = 2
+            col1 = 6
+            col2 = 7
+
+        else:
+            res = 'Color'
+            col1 = 'Color1'
+            col2 = 'Color2'
+
+        # create bump nodes
+        sep = grp.nodes.new(sep_col)
+        sep.name = 'Separate Bump 1'
+        sep.label = 'Separate Bump 1'
+        sep.select = False
+        sep.location.x = -500
+        sep.location.y = -500
+
+        com = grp.nodes.new(com_col)
+        com.name = 'Combine Bump 1'
+        com.label = 'Combine Bump 1'
+        com.select = False
+        com.location.x = -250
+        com.location.y = -400
+
+        bump_mix = grp.nodes.new(mix_node)
+        bump_mix.name = 'Bump Correction'
+        bump_mix.label = 'Bump Correction'
+        bump_mix.blend_type = 'ADD'
+        bump_mix.inputs[factor].default_value = 1.0
+        bump_mix.select = False
+        bump_mix.location.x = 0
+        bump_mix.location.y = -500
+
+        norm = grp.nodes.new('ShaderNodeNormalMap')
+        norm.name = 'Normal Map'
+        norm.label = 'Normal Map'
+        norm.uv_map = mat.xray.uv_texture
+        norm.select = False
+        norm.location.x = 200
+        norm.location.y = -500
+
+        if create_light:
+            light_sun = grp.nodes.new(mix_node)
+            light_sun.name = 'Light + Sun'
+            light_sun.label = 'Light + Sun'
+            light_sun.blend_type = 'ADD'
+            light_sun.inputs[factor].default_value = 1.0
+            light_sun.select = False
+            light_sun.location.x = -500
+            light_sun.location.y = 200
+
+            hemi = grp.nodes.new(mix_node)
+            hemi.name = '+ Hemi'
+            hemi.label = '+ Hemi'
+            hemi.blend_type = 'ADD'
+            hemi.inputs[factor].default_value = 1.0
+            hemi.select = False
+            hemi.location.x = -150
+            hemi.location.y = 0
+
+            lmap = grp.nodes.new(mix_node)
+            lmap.name = 'Diffuse * Light Map'
+            lmap.label = 'Diffuse * Light Map'
+            lmap.blend_type = 'MULTIPLY'
+            lmap.inputs[factor].default_value = 1.0
+            lmap.select = False
+            lmap.location.x = 200
+            lmap.location.y = 200
+
+            if utils.version.IS_34:
+                light_sun.data_type = 'RGBA'
+                hemi.data_type = 'RGBA'
+                lmap.data_type = 'RGBA'
+
+            # link nodes
+            grp.links.new(
+                lmap.outputs[res],    # Result
+                shader_node.inputs[color_socket]
+            )
+            grp.links.new(
+                input_node.outputs['Texture Color'],
+                lmap.inputs[col1]    # color A
+            )
+            grp.links.new(
+                light_sun.outputs[res],    # Result
+                hemi.inputs[col1]    # color A
+            )
+            hemi_lmap = grp.links.new(
+                hemi.outputs[res],    # Result
+                lmap.inputs[col2]    # color B
+            )
+
+        else:
+            grp.links.new(
+                input_node.outputs['Texture Color'],
+                shader_node.inputs[color_socket]
+            )
+
+        if utils.version.IS_34:
+            bump_mix.data_type = 'RGBA'
+
+        # vertex colors
+        light_node, sun_node, hemi_node = _create_vert_col_nodes(mat, grp)
+
+        # link light maps
+        if create_light:
+            if use_lmap_1 and use_lmap_2:
+                grp.nodes.remove(hemi_node)
+
+                grp.links.new(
+                    input_node.outputs['Light Map 1 Color'],
+                    light_sun.inputs[col1]    # color A
+                )
+                grp.links.new(
+                    input_node.outputs['Light Map 1 Alpha'],
+                    light_sun.inputs[col2]    # color B
+                )
+
+                # soc
+                if light_format in ('SOC', '1964-3120'):
+                    grp.links.new(
+                        input_node.outputs['Light Map 2 Color'],
+                        hemi.inputs[col2]    # color B
+                    )
+
+                # cs/cop
+                elif light_format in ('CSCOP', '3436-3844'):
+                    grp.links.new(
+                        input_node.outputs['Light Map 2 Alpha'],
+                        hemi.inputs[col2]    # color B
+                    )
+
+            # link terrain
+            elif use_lmap_1 and not use_lmap_2:
+                if alpha_link:
+                    grp.links.remove(alpha_link)
+                grp.nodes.remove(hemi_node)
+
+                grp.links.new(
+                    input_node.outputs['Texture Alpha'],
+                    hemi.inputs[col2]    # color B
+                )
+                grp.links.new(
+                    input_node.outputs['Light Map 1 Color'],
+                    light_sun.inputs[col1]    # color A
+                )
+                grp.links.new(
+                    input_node.outputs['Light Map 1 Alpha'],
+                    light_sun.inputs[col2]    # color B
+                )
+
+            # link vertex colors
+            elif light_node and sun_node and hemi_node:
+                grp.links.new(
+                    light_node.outputs['Color'],
+                    light_sun.inputs[col1]    # color A
+                )
+                grp.links.new(
+                    sun_node.outputs['Color'],
+                    light_sun.inputs[col2]    # color B
+                )
+                grp.links.new(
+                    hemi_node.outputs['Color'],
+                    hemi.inputs[col2]    # color B
+                )
+
+            # link multiple usage
+            elif use_hemi and not use_light and not use_sun:
+                grp.links.remove(hemi_lmap)
+                grp.nodes.remove(light_sun)
+                grp.nodes.remove(hemi)
+                lmap.inputs[factor].default_value = 0.5
+
+                grp.links.new(
+                    hemi_node.outputs['Color'],
+                    lmap.inputs[col2]    # color B
+                )
+
+        # link bump nodes
+        grp.links.new(norm.outputs['Normal'], shader_node.inputs['Normal'])
+        grp.links.new(bump_mix.outputs[res], norm.inputs['Color'])
+        grp.links.new(com.outputs[col], bump_mix.inputs[col1])
+        grp.links.new(
+            input_node.outputs['Bump 2 Color'],
+            bump_mix.inputs[col2]
+        )
+        grp.links.new(input_node.outputs['Bump 1 Color'], sep.inputs[col])
+        grp.links.new(input_node.outputs['Bump 1 Alpha'], com.inputs[red])
+        grp.links.new(sep.outputs[blue], com.inputs[green])
+        grp.links.new(sep.outputs[green], com.inputs[blue])
+
+        if utils.version.support_principled_shader():
+            grp.links.new(
+                sep.outputs[red],
+                shader_node.inputs[utils.version.SPECULAR]
+            )
+
+    group.node_tree = grp
+
+    return group
+
+
+def _create_and_link_nodes(
+        mat,
+        diff_img,
+        bump_1,
+        bump_2,
+        shader_groups,
+        light_format,
+        create_light
+    ):
+
+    xray = mat.xray
+
+    # diffuse image
+    img_node, bumps = _create_image_nodes(mat, diff_img, bump_1, bump_2, xray)
+
+    # light maps image
+    if create_light:
+        lmap_imgs, use_lmap_1, use_lmap_2 = _create_lmap_image_nodes(
+            mat,
+            xray,
+            img_node
+        )
+    else:
+        lmap_imgs = []
+        use_lmap_1 = False
+        use_lmap_2 = False
+
+    # group node
+    group = _create_group_nodes(
+        mat,
+        img_node,
+        shader_groups,
+        use_lmap_1,
+        use_lmap_2,
+        light_format,
+        create_light
+    )
+
+    # create output node
+    out_node = mat.node_tree.nodes.new('ShaderNodeOutputMaterial')
+    out_node.select = False
+    out_node.location.x = group.location.x + 500
+    out_node.location.y = group.location.y
+
+    # link group
+
+    mat.node_tree.links.new(
+        group.outputs['Shader'],
+        out_node.inputs['Surface']
+    )
+
+    # link diffuse image
+    mat.node_tree.links.new(
+        img_node.outputs['Color'],
+        group.inputs['Texture Color']
+    )
+
+    mat.node_tree.links.new(
+        img_node.outputs['Alpha'],
+        group.inputs['Texture Alpha']
+    )
+
+    # link bump images
+    for index, bump_img in enumerate(bumps):
+
+        if not bump_img:
+            continue
+
+        mat.node_tree.links.new(
+            bump_img.outputs['Color'],
+            group.inputs['Bump {} Color'.format(index + 1)]
+        )
+
+        mat.node_tree.links.new(
+            bump_img.outputs['Alpha'],
+            group.inputs['Bump {} Alpha'.format(index + 1)]
+        )
+
+    # link light map images
+    if len(lmap_imgs) >= 1:
+        mat.node_tree.links.new(
+            lmap_imgs[0].outputs['Color'],
+            group.inputs['Light Map 1 Color']
+        )
+
+        mat.node_tree.links.new(
+            lmap_imgs[0].outputs['Alpha'],
+            group.inputs['Light Map 1 Alpha']
+        )
+
+    if len(lmap_imgs) == 2:
+        mat.node_tree.links.new(
+            lmap_imgs[1].outputs['Color'],
+            group.inputs['Light Map 2 Color']
+        )
+
+        mat.node_tree.links.new(
+            lmap_imgs[1].outputs['Alpha'],
+            group.inputs['Light Map 2 Alpha']
+        )
+
+
+def _create_shader_nodes(ctx, mat, shader_groups, light_format, create_light):
+    # get diffuse image
+    diff_img = _get_diffuse_img(mat)
+    if not diff_img:
+        return
+
+    # get bumps images
+    bump_1, bump_2 = _get_bump_imgs(diff_img)
+    if bump_1 and bump_2:
+        bump_1_img = ctx.image(bump_1)
+        bump_2_img = ctx.image(bump_2)
+    else:
+        diff_path = os.path.splitext(diff_img.filepath)[0]
+        bump_1_path = diff_path + '_bump' + os.extsep + 'dds'
+        bump_2_path = diff_path + '_bump#' + os.extsep + 'dds'
+
+        bump_1_img = utils.tex.load_image_by_tex_path(bump_1_path)
+        bump_2_img = utils.tex.load_image_by_tex_path(bump_2_path)
+
+    # remove all nodes
+    mat.node_tree.nodes.clear()
+
+    # create nodes
+    _create_and_link_nodes(
+        mat,
+        diff_img,
+        bump_1_img,
+        bump_2_img,
+        shader_groups,
+        light_format,
+        create_light
+    )
+
+
+def _create_base_nodes(mat, img):
+    xray = mat.xray
+
+    # create output node
+    out_node = mat.node_tree.nodes.new('ShaderNodeOutputMaterial')
+    out_node.select = False
+    out_node.location.x = 300
+    out_node.location.y = 300
+
+    # create shader node
+    if utils.version.support_principled_shader():
+        shader_node = mat.node_tree.nodes.new('ShaderNodeBsdfPrincipled')
+        shader_node.inputs[utils.version.SPECULAR].default_value = 0.0
+        color_socket = 'Base Color'
+    else:
+        shader_node = mat.node_tree.nodes.new('ShaderNodeBsdfDiffuse')
+        color_socket = 'Color'
+    shader_node.select = False
+    shader_node.location.x = 10
+    shader_node.location.y = 300
+
+    # create image node
+    img_node = mat.node_tree.nodes.new('ShaderNodeTexImage')
+    img_node.image = img
+    img_node.select = False
+    img_node.location.x = -500
+    img_node.location.y = 100
+
+    # create uv-map node
+    uv_name = xray.uv_texture
+    if uv_name:
+        uv_node = mat.node_tree.nodes.new('ShaderNodeUVMap')
+        uv_node.uv_map = uv_name
+        uv_node.select = False
+        uv_node.location.x = -800
+        uv_node.location.y = 100
+
+        # link
+        mat.node_tree.links.new(
+            uv_node.outputs['UV'],
+            img_node.inputs['Vector']
+        )
+
+    # link nodes
+    mat.node_tree.links.new(
+        shader_node.outputs['BSDF'],
+        out_node.inputs['Surface']
+    )
+    mat.node_tree.links.new(
+        img_node.outputs['Color'],
+        shader_node.inputs[color_socket]
+    )
+
+    # is not terrain
+    if not (xray.lmap_0 and not xray.lmap_1) and utils.version.IS_28:
+        mat.node_tree.links.new(
+            img_node.outputs['Alpha'],
+            shader_node.inputs['Alpha']
+        )
+
+
+def _remove_shader_nodes(mat):
+    # get diffuse image
+    diff_img = _get_diffuse_img(mat)
+    if not diff_img:
+        return
+
+    # remove all nodes
+    mat.node_tree.nodes.clear()
+
+    # create nodes
+    _create_base_nodes(mat, diff_img)
+
+
+mode_items = (
+    ('ACTIVE_LEVEL', 'Active Level', ''),
+    ('SELECTED_LEVELS', 'Selected Levels', ''),
+    ('ALL_LEVELS', 'All Levels', ''),
+
+    ('ACTIVE_OBJECT', 'Active Object', ''),
+    ('SELECTED_OBJECTS', 'Selected Objects', ''),
+    ('ALL_OBJECTS', 'All Objects', ''),
+
+    ('ACTIVE_MATERIAL', 'Active Material', ''),
+    ('ALL_MATERIALS', 'All Materials', '')
+)
+
+
+class _BaseOperator(utils.ie.BaseOperator):
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def draw(self, context):    # pragma: no cover
+        layout = self.layout
+        column = layout.column(align=True)
+
+        column.prop(self, 'mode', expand=True)
+
+    def invoke(self, context, event):    # pragma: no cover
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+
+
+class XRAY_OT_create_level_shader_nodes(_BaseOperator):
+    bl_idname = 'io_scene_xray.create_level_shader_nodes'
+    bl_label = 'Create Level Shader Nodes'
+
+    mode = bpy.props.EnumProperty(default='ACTIVE_LEVEL', items=mode_items)
+    light_format = bpy.props.EnumProperty(
+        default='SOC',
+        items=(
+            ('CSCOP', 'Clear Sky / Call of Pripyat', ''),
+            ('SOC', 'Shadow of Chernobyl', ''),
+            ('3436-3844', 'Builds 3436-3844', ''),
+            ('1964-3120', 'Builds 1964-3120', '')
+        )
+    )
+
+    def draw(self, context):    # pragma: no cover
+        col = self.layout.column(align=True)
+
+        col.label(text='Mode:')
+        col.prop(self, 'mode', expand=True)
+
+        col.label(text='Light Format:')
+        col.prop(self, 'light_format', expand=True)
+
+    def execute(self, context):
+        materials = _get_materials(self.mode)
+
+        change_count = 0
+        shader_groups = {}
+
+        ctx = formats.contexts.ImportMeshContext()
+
+        for mat in materials:
+            _create_shader_nodes(
+                ctx,
+                mat,
+                shader_groups,
+                self.light_format,
+                True
+            )
+            change_count += 1
+
+        self.report({'INFO'}, 'Changed materials: {}'.format(change_count))
+
+        return {'FINISHED'}
+
+
+class XRAY_OT_remove_level_shader_nodes(_BaseOperator):
+    bl_idname = 'io_scene_xray.remove_level_shader_nodes'
+    bl_label = 'Remove Level Shader Nodes'
+
+    mode = bpy.props.EnumProperty(default='ACTIVE_LEVEL', items=mode_items)
+
+    def draw(self, context):    # pragma: no cover
+        col = self.layout.column(align=True)
+
+        col.label(text='Mode:')
+        col.prop(self, 'mode', expand=True)
+
+    def execute(self, context):
+        materials = _get_materials(self.mode)
+
+        change_count = 0
+
+        for mat in materials:
+            _remove_shader_nodes(mat)
+            change_count += 1
+
+        self.report({'INFO'}, 'Changed materials: {}'.format(change_count))
+
+        return {'FINISHED'}
+
+
+class XRAY_OT_create_bump_nodes(_BaseOperator):
+    bl_idname = 'io_scene_xray.create_bump_nodes'
+    bl_label = 'Create Bump Nodes'
+
+    mode = bpy.props.EnumProperty(
+        default='SELECTED_OBJECTS',
+        items=(
+            ('ACTIVE_MATERIAL', 'Active Material', ''),
+            ('ACTIVE_OBJECT', 'Active Object', ''),
+            ('SELECTED_OBJECTS', 'Selected Objects', ''),
+            ('ALL_OBJECTS', 'All Objects', ''),
+            ('ALL_MATERIALS', 'All Materials', '')
+        )
+    )
+
+    def draw(self, context):    # pragma: no cover
+        col = self.layout.column(align=True)
+
+        col.label(text='Mode:')
+        col.prop(self, 'mode', expand=True)
+
+    def execute(self, context):
+        materials = _get_materials(self.mode)
+
+        change_count = 0
+        shader_groups = {}
+
+        ctx = formats.contexts.ImportMeshContext()
+
+        for mat in materials:
+            _create_shader_nodes(
+                ctx,
+                mat,
+                shader_groups,
+                None,    # light format
+                False    # create light nodes
+            )
+            change_count += 1
+
+        self.report({'INFO'}, 'Changed materials: {}'.format(change_count))
+
+        return {'FINISHED'}
+
+
+classes = (
+    XRAY_OT_create_level_shader_nodes,
+    XRAY_OT_remove_level_shader_nodes,
+    XRAY_OT_create_bump_nodes
+)
+
+
+def register():
+    utils.version.register_classes(classes)
+
+
+def unregister():
+    for operator in reversed(classes):
+        bpy.utils.unregister_class(operator)

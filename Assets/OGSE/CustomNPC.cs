@@ -28,7 +28,7 @@ namespace Ogse
         KILLER
     }
 
-    public class NPC : MonoBehaviour
+    public class CustomNPC : MonoBehaviour
     {
         bool _isQuestPerson;
         bool _isZombied;

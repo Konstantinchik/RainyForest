@@ -1,0 +1,12 @@
+[run]
+branch = True
+source = io_scene_xray
+omit =
+    io_scene_xray/ui/*
+    io_scene_xray/panels/*
+    io_scene_xray/viewport/*
+	*/ui.py
+	*/draw.py
+
+[report]
+exclude_lines = pragma: no cover
